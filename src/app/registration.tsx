@@ -1,0 +1,204 @@
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import Image from 'next/image';
+
+export default function RegisterPage() {
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Blue header */}
+      <div className="bg-[#1e4b7b] text-white px-6 py-4">
+        <h1 className="text-xl font-medium">Login</h1>
+      </div>
+
+      {/* Logo section - positioned in upper right */}
+      <div className="flex justify-end pr-8 pt-4">
+        <div className="flex flex-col items-center">
+          <Image
+            src="/images/cns-main-logo.png"
+            alt="CNS Logo"
+            width={120}
+            height={120}
+            className="object-contain"
+          />
+          <p className="text-[#0077bb] mt-1 text-3xl font-normal">Click</p>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="flex items-center justify-center font-medium py-8 px-10 mx-0">
+        <div className="w-full max-w-4xl">
+          {/* Registration form container */}
+          <div className="bg-[#eaeaea] p-8 shadow-sm px-36">
+            <h2 className="text-2xl font-bold text-black mb-2">
+              Register for an Account
+            </h2>
+            <p className="text-black text-sm mb-6">
+              Please create your own account and do not create an account on
+              behalf of someone else.
+            </p>
+
+            <div className="space-y-6">
+              {/* Register Me As section */}
+              <div>
+                <Label className="text-gray-600 font-normal text-sm mb-3 block">
+                  Register Me As:
+                </Label>
+                <div className="flex gap-6">
+                  <label className="flex items-center cursor-pointer">
+                    <div className="relative">
+                      <input
+                        type="radio"
+                        name="userType"
+                        value="doctor"
+                        className="sr-only peer"
+                        defaultChecked
+                      />
+                      <div className="w-4 h-4 border-2 border-gray-400 rounded-full peer-checked:border-[#0077bb] peer-checked:bg-[#0077bb] flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
+                      </div>
+                    </div>
+                    <span className="text-black text-sm ml-2">Doctor</span>
+                  </label>
+                  <label className="flex items-center cursor-pointer">
+                    <div className="relative">
+                      <input
+                        type="radio"
+                        name="userType"
+                        value="hospice"
+                        className="sr-only peer"
+                      />
+                      <div className="w-4 h-4 border-2 border-gray-400 rounded-full peer-checked:border-[#0077bb] peer-checked:bg-[#0077bb] flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
+                      </div>
+                    </div>
+                    <span className="text-black text-sm ml-2">Hospice</span>
+                  </label>
+                  <label className="flex items-center cursor-pointer">
+                    <div className="relative">
+                      <input
+                        type="radio"
+                        name="userType"
+                        value="pharmacist"
+                        className="sr-only peer"
+                      />
+                      <div className="w-4 h-4 border-2 border-gray-400 rounded-full peer-checked:border-[#0077bb] peer-checked:bg-[#0077bb] flex items-center justify-center">
+                        <div className="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
+                      </div>
+                    </div>
+                    <span className="text-black text-sm ml-2">Pharmacist</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* Email and Password fields in two columns */}
+              <div className="grid grid-cols-2 gap-6">
+                {/* Left column */}
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="email"
+                      className="text-gray-600 font-normal text-sm"
+                    >
+                      Email Address
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      className="bg-white border-gray-300 rounded-lg px-0 h-10 w-72"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="password"
+                      className="text-gray-600 font-normal text-sm"
+                    >
+                      Password
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      className="bg-white border-gray-300 rounded-lg h-10 w-72"
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Right column */}
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="confirmEmail"
+                      className="text-gray-600 font-normal text-sm"
+                    >
+                      Confirm Email
+                    </Label>
+                    <Input
+                      id="confirmEmail"
+                      type="email"
+                      className="bg-white border-gray-300 h-10 rounded-lg w-72"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor="confirmPassword"
+                      className="text-gray-600 font-normal text-sm"
+                    >
+                      Confirm Password
+                    </Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      className="bg-white border-gray-300 rounded-lg h-10 w-72"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Password requirements and Continue button section */}
+              <div className="flex justify-between items-start pt-4">
+                {/* Password requirements */}
+                <div>
+                  <h3 className="text-black font-bold text-sm mb-2">
+                    Password Must:
+                  </h3>
+                  <ul className="text-black text-xs space-y-1">
+                    <li>• Minimum of 8 characters</li>
+                    <li>• Contain one upper case letter</li>
+                    <li>• Contain one lower case letter</li>
+                    <li>• Contain one special character (! @ # $ etc.)</li>
+                    <li>• Maximum of 72 characters</li>
+                  </ul>
+                </div>
+
+                {/* Continue button */}
+                <div className="ml-8">
+                  <Button
+                    type="submit"
+                    className="bg-[#0077bb] hover:bg-[#005599] text-white text-base font-medium rounded-lg border-0 h-12 w-44 px-8 text-center"
+                  >
+                    Continue
+                  </Button>
+                </div>
+              </div>
+
+              {/* Need help link */}
+              <div className="text-left pt-2">
+                <Link
+                  href="/help"
+                  className="text-[#0077bb] hover:text-[#005599] text-sm"
+                >
+                  Need Help ?
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
