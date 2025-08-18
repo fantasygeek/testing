@@ -1,21 +1,17 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Better Azure compatibility
+  // Remove output: 'standalone' for now - this might be causing issues
   trailingSlash: false,
+  
   images: {
     unoptimized: true
   },
   
-  // Ensure static files are properly handled
-  assetPrefix: process.env.NODE_ENV === 'production' ? '' : undefined,
+  // Fix the experimental config
+  serverExternalPackages: [], // moved from experimental
   
-  // Add experimental features for better Azure support
-  experimental: {
-    serverComponentsExternalPackages: []
-  },
-  
-  // Ensure proper headers
+  // Basic headers
   async headers() {
     return [
       {
