@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start -H 0.0.0.0 -p ${PORT:-8080}",
+    "start": "node server.js",
+    "startLocal": "next start",
     "lint": "next lint"
   },
   "dependencies": {
