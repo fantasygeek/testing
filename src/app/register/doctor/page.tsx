@@ -292,7 +292,7 @@ export default function RegisterDoctorPage() {
                     htmlFor="uploadIds"
                     className="text-gray-600 font-normal text-sm min-w-[80px]"
                   >
-                    Upload ID's
+                    Upload IDs
                   </Label>
                   <Input
                     id="uploadIds"

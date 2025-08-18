@@ -1,8 +1,8 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Image from "next/image"
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import Image from 'next/image';
 
 export default function RegisterDoctorPage() {
   return (
@@ -17,9 +17,11 @@ export default function RegisterDoctorPage() {
         {/* Left side - Title and description */}
         <div className="flex-1 px-8 py-6">
           <div className="mb-8">
-            <h2 className="text-3xl font-bold text-black mb-4">Register me as Nurse</h2>
+            <h2 className="text-3xl font-bold text-black mb-4">
+              Register me as Nurse
+            </h2>
             <p className="text-black text-base">
-               This account is invited and register by Hospice / Medical facility
+              This account is invited and register by Hospice / Medical facility
             </p>
           </div>
         </div>
@@ -27,7 +29,13 @@ export default function RegisterDoctorPage() {
         {/* Right side - Logo */}
         <div className="flex justify-end pr-8 pt-6">
           <div className="flex flex-col items-center">
-            <Image src="/images/cns-logo.png" alt="CNS Logo" width={150} height={150} className="object-contain" />
+            <Image
+              src="/images/cns-logo.png"
+              alt="CNS Logo"
+              width={150}
+              height={150}
+              className="object-contain"
+            />
           </div>
         </div>
       </div>
@@ -37,52 +45,96 @@ export default function RegisterDoctorPage() {
         <div className="max-w-6xl mx-auto">
           {/* Personal Details Section */}
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-600 mb-6">Personal Details</h3>
+            <h3 className="text-lg font-semibold text-gray-600 mb-6">
+              Personal Details
+            </h3>
 
             {/* ID field - full width */}
             <div className="mb-6 flex items-center gap-2">
-              <Label htmlFor="id" className="text-gray-600 font-normal text-sm min-w-[60px]">
+              <Label
+                htmlFor="id"
+                className="text-gray-600 font-normal text-sm min-w-[60px]"
+              >
                 ID
               </Label>
-              <Input id="id" type="text" className="bg-white border-gray-300 rounded-lg h-10 w-full max-w-md" />
+              <Input
+                id="id"
+                type="text"
+                className="bg-white border-gray-300 rounded-lg h-10 w-full max-w-md"
+              />
             </div>
 
             {/* Name fields - three columns */}
             <div className="grid grid-cols-3 gap-6 mb-6">
               <div className="flex items-center gap-2">
-                <Label htmlFor="firstName" className="text-gray-600 font-normal text-sm min-w-[80px]">
+                <Label
+                  htmlFor="firstName"
+                  className="text-gray-600 font-normal text-sm min-w-[80px]"
+                >
                   First Name
                 </Label>
-                <Input id="firstName" type="text" className="bg-white border-gray-300 rounded-lg h-10 flex-1" />
+                <Input
+                  id="firstName"
+                  type="text"
+                  className="bg-white border-gray-300 rounded-lg h-10 flex-1"
+                />
               </div>
               <div className="flex items-center gap-2">
-                <Label htmlFor="middleName" className="text-gray-600 font-normal text-sm min-w-[90px]">
+                <Label
+                  htmlFor="middleName"
+                  className="text-gray-600 font-normal text-sm min-w-[90px]"
+                >
                   Middle Name
                 </Label>
-                <Input id="middleName" type="text" className="bg-white border-gray-300 rounded-lg h-10 flex-1" />
+                <Input
+                  id="middleName"
+                  type="text"
+                  className="bg-white border-gray-300 rounded-lg h-10 flex-1"
+                />
               </div>
               <div className="flex items-center gap-2">
-                <Label htmlFor="lastName" className="text-gray-600 font-normal text-sm min-w-[80px]">
+                <Label
+                  htmlFor="lastName"
+                  className="text-gray-600 font-normal text-sm min-w-[80px]"
+                >
                   Last Name
                 </Label>
-                <Input id="lastName" type="text" className="bg-white border-gray-300 rounded-lg h-10 flex-1" />
+                <Input
+                  id="lastName"
+                  type="text"
+                  className="bg-white border-gray-300 rounded-lg h-10 flex-1"
+                />
               </div>
             </div>
 
             {/* Date of Birth and Gender row */}
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div className="flex items-center gap-2">
-                <Label htmlFor="dateOfBirth" className="text-gray-600 font-normal text-sm min-w-[90px]">
+                <Label
+                  htmlFor="dateOfBirth"
+                  className="text-gray-600 font-normal text-sm min-w-[90px]"
+                >
                   Date of Birth
                 </Label>
-                <Input id="dateOfBirth" type="date" className="bg-white border-gray-300 rounded-lg h-10 flex-1" />
+                <Input
+                  id="dateOfBirth"
+                  type="date"
+                  className="bg-white border-gray-300 rounded-lg h-10 flex-1"
+                />
               </div>
               <div className="flex items-center gap-2">
-                <Label className="text-gray-600 font-normal text-sm min-w-[60px]">Gender</Label>
+                <Label className="text-gray-600 font-normal text-sm min-w-[60px]">
+                  Gender
+                </Label>
                 <div className="flex gap-6">
                   <label className="flex items-center cursor-pointer">
                     <div className="relative">
-                      <input type="radio" name="gender" value="male" className="sr-only peer" />
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="male"
+                        className="sr-only peer"
+                      />
                       <div className="w-4 h-4 border-2 border-gray-400 rounded-full peer-checked:border-[#0077bb] peer-checked:bg-[#0077bb] flex items-center justify-center">
                         <div className="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
                       </div>
@@ -91,7 +143,12 @@ export default function RegisterDoctorPage() {
                   </label>
                   <label className="flex items-center cursor-pointer">
                     <div className="relative">
-                      <input type="radio" name="gender" value="female" className="sr-only peer" />
+                      <input
+                        type="radio"
+                        name="gender"
+                        value="female"
+                        className="sr-only peer"
+                      />
                       <div className="w-4 h-4 border-2 border-gray-400 rounded-full peer-checked:border-[#0077bb] peer-checked:bg-[#0077bb] flex items-center justify-center">
                         <div className="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
                       </div>
@@ -105,77 +162,142 @@ export default function RegisterDoctorPage() {
             {/* Mobile Number and Facility row */}
             <div className="grid grid-cols-2 gap-6 mb-8">
               <div className="flex items-center gap-2">
-                <Label htmlFor="mobileNumber" className="text-gray-600 font-normal text-sm min-w-[100px]">
+                <Label
+                  htmlFor="mobileNumber"
+                  className="text-gray-600 font-normal text-sm min-w-[100px]"
+                >
                   Mobile Number
                 </Label>
-                <Input id="mobileNumber" type="tel" className="bg-white border-gray-300 rounded-lg h-10 flex-1" />
+                <Input
+                  id="mobileNumber"
+                  type="tel"
+                  className="bg-white border-gray-300 rounded-lg h-10 flex-1"
+                />
               </div>
               <div className="flex items-center gap-2">
-                <Label htmlFor="facility" className="text-gray-600 font-normal text-sm min-w-[60px]">
+                <Label
+                  htmlFor="facility"
+                  className="text-gray-600 font-normal text-sm min-w-[60px]"
+                >
                   Hospice
                 </Label>
-                <Input id="facility" type="text" className="bg-white border-gray-300 rounded-lg h-10 flex-1" />
+                <Input
+                  id="facility"
+                  type="text"
+                  className="bg-white border-gray-300 rounded-lg h-10 flex-1"
+                />
               </div>
             </div>
           </div>
 
           {/* Professional Details Section */}
           <div className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-600 mb-6">Professional Details</h3>
+            <h3 className="text-lg font-semibold text-gray-600 mb-6">
+              Professional Details
+            </h3>
 
             {/* Three columns with specific field arrangement */}
             <div className="grid grid-cols-3 gap-6 mb-6">
               {/* First column: License No., Date Issue, Valid Until */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="licenseNo" className="text-gray-600 font-normal text-sm min-w-[80px]">
+                  <Label
+                    htmlFor="licenseNo"
+                    className="text-gray-600 font-normal text-sm min-w-[80px]"
+                  >
                     License No.
                   </Label>
-                  <Input id="licenseNo" type="text" className="bg-white border-gray-300 rounded-lg h-10 flex-1" />
+                  <Input
+                    id="licenseNo"
+                    type="text"
+                    className="bg-white border-gray-300 rounded-lg h-10 flex-1"
+                  />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="dateIssue" className="text-gray-600 font-normal text-sm min-w-[80px]">
+                  <Label
+                    htmlFor="dateIssue"
+                    className="text-gray-600 font-normal text-sm min-w-[80px]"
+                  >
                     Date Issue
                   </Label>
-                  <Input id="dateIssue" type="date" className="bg-white border-gray-300 rounded-lg h-10 flex-1" />
+                  <Input
+                    id="dateIssue"
+                    type="date"
+                    className="bg-white border-gray-300 rounded-lg h-10 flex-1"
+                  />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="validUntil" className="text-gray-600 font-normal text-sm min-w-[80px]">
+                  <Label
+                    htmlFor="validUntil"
+                    className="text-gray-600 font-normal text-sm min-w-[80px]"
+                  >
                     Valid Until
                   </Label>
-                  <Input id="validUntil" type="date" className="bg-white border-gray-300 rounded-lg h-10 flex-1" />
+                  <Input
+                    id="validUntil"
+                    type="date"
+                    className="bg-white border-gray-300 rounded-lg h-10 flex-1"
+                  />
                 </div>
               </div>
 
               {/* Second column: Issued By, Place of Issue, Practice By */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="issuedBy" className="text-gray-600 font-normal text-sm min-w-[90px]">
+                  <Label
+                    htmlFor="issuedBy"
+                    className="text-gray-600 font-normal text-sm min-w-[90px]"
+                  >
                     Issued By
                   </Label>
-                  <Input id="issuedBy" type="text" className="bg-white border-gray-300 rounded-lg h-10 flex-1" />
+                  <Input
+                    id="issuedBy"
+                    type="text"
+                    className="bg-white border-gray-300 rounded-lg h-10 flex-1"
+                  />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="placeOfIssue" className="text-gray-600 font-normal text-sm min-w-[90px]">
+                  <Label
+                    htmlFor="placeOfIssue"
+                    className="text-gray-600 font-normal text-sm min-w-[90px]"
+                  >
                     Place of Issue
                   </Label>
-                  <Input id="placeOfIssue" type="text" className="bg-white border-gray-300 rounded-lg h-10 flex-1" />
+                  <Input
+                    id="placeOfIssue"
+                    type="text"
+                    className="bg-white border-gray-300 rounded-lg h-10 flex-1"
+                  />
                 </div>
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="practiceBy" className="text-gray-600 font-normal text-sm min-w-[80px]">
+                  <Label
+                    htmlFor="practiceBy"
+                    className="text-gray-600 font-normal text-sm min-w-[80px]"
+                  >
                     Practice By
                   </Label>
-                  <Input id="practiceBy" type="text" className="bg-white border-gray-300 rounded-lg h-10 flex-1" />
+                  <Input
+                    id="practiceBy"
+                    type="text"
+                    className="bg-white border-gray-300 rounded-lg h-10 flex-1"
+                  />
                 </div>
               </div>
 
               {/* Third column: Upload ID's */}
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Label htmlFor="uploadIds" className="text-gray-600 font-normal text-sm min-w-[80px]">
-                    Upload ID's
+                  <Label
+                    htmlFor="uploadIds"
+                    className="text-gray-600 font-normal text-sm min-w-[80px]"
+                  >
+                    Upload IDs
                   </Label>
-                  <Input id="uploadIds" type="file" className="bg-white border-gray-300 rounded-lg h-10 flex-1" />
+                  <Input
+                    id="uploadIds"
+                    type="file"
+                    className="bg-white border-gray-300 rounded-lg h-10 flex-1"
+                  />
                 </div>
               </div>
             </div>
@@ -185,7 +307,10 @@ export default function RegisterDoctorPage() {
           <div className="relative pt-4">
             {/* Need Help link - positioned absolutely to the left */}
             <div className="absolute left-0 top-4">
-              <Link href="/help" className="text-[#0077bb] hover:text-[#005599] text-sm">
+              <Link
+                href="/help"
+                className="text-[#0077bb] hover:text-[#005599] text-sm"
+              >
                 Need Help ?
               </Link>
             </div>
@@ -194,7 +319,8 @@ export default function RegisterDoctorPage() {
             <div className="flex flex-col items-center gap-4">
               {/* Information message */}
               <p className="text-gray-600 text-sm text-center">
-                Please check the email after registration as this will be approve by Hospice.
+                Please check the email after registration as this will be
+                approve by Hospice.
               </p>
 
               {/* Buttons */}
@@ -218,5 +344,5 @@ export default function RegisterDoctorPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
