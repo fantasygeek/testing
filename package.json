@@ -6,7 +6,6 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "node server.js",
-    "startLocal": "next start",
     "lint": "next lint"
   },
   "dependencies": {
