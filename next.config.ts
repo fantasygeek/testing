@@ -1,17 +1,19 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Remove output: 'standalone' for now - this might be causing issues
+  // Enable standalone output for better Azure App Service compatibility
+  output: 'standalone',
+  
   trailingSlash: false,
   
   images: {
     unoptimized: true
   },
   
-  // Fix the experimental config
-  serverExternalPackages: [], // moved from experimental
+  // Server configuration
+  serverExternalPackages: [],
   
-  // Basic headers
+  // Headers for security
   async headers() {
     return [
       {
@@ -21,9 +23,18 @@ const nextConfig: NextConfig = {
             key: 'X-Frame-Options',
             value: 'DENY',
           },
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
         ],
       },
     ]
+  },
+  
+  // Ensure proper handling of API routes
+  async rewrites() {
+    return []
   },
 };
 
