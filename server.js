@@ -6,15 +6,12 @@ const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-// Try multiple port sources for Azure compatibility
-const port = process.env.PORT || process.env.WEBSITES_PORT || process.env.HTTP_PLATFORM_PORT || 8080;
+// Force port 8080 for Azure App Service
+const port = 8080;
 
 app.prepare().then(() => {
   console.log('Next.js app prepared, starting server...');
-  console.log('Available environment variables:');
-  console.log('PORT:', process.env.PORT);
-  console.log('WEBSITES_PORT:', process.env.WEBSITES_PORT);
-  console.log('HTTP_PLATFORM_PORT:', process.env.HTTP_PLATFORM_PORT);
+  console.log('All environment variables:', JSON.stringify(process.env, null, 2));
   console.log('Using port:', port);
   
   createServer((req, res) => {
