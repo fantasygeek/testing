@@ -28,12 +28,6 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Prepare for PM2
-        run: |
-          mkdir -p ./site
-          cp -r .next/standalone/* ./site
-          cp ecosystem.config.js ./site
-
       - name: Create deployment package
         run: |
           # Only include necessary files for production
