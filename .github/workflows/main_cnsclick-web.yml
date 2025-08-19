@@ -50,7 +50,7 @@ jobs:
           name: node-app
 
       - name: Zip artifact for deployment
-        run: zip -r release.zip .next static package.json posts
+        run: zip -r node-app.zip .next static package.json posts
 
       - name: Login to Azure
         uses: azure/login@v2
