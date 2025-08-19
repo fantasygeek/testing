@@ -26,10 +26,13 @@ jobs:
         run: npm ci
 
       - name: Build application
+        run: npm run build
+
+      - name: Prepare for PM2
         run: |
-          npm run build
-          mv ./build/static ./build/standalone/build
-          mv ./public ./build/standalone
+          mkdir -p ./site
+          cp -r .next/standalone/* ./site
+          cp ecosystem.config.js ./site
 
       - name: Create deployment package
         run: |
@@ -71,5 +74,4 @@ jobs:
         with:
           app-name: 'cnsclick-web'
           slot-name: 'Production'
-          publish-profile: ${{ env.APPLICATION_PUBLISH_PROFILE }}
-          package: ./build/standalone
+          package: ./site
