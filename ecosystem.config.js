@@ -2,11 +2,13 @@ module.exports = {
   apps: [
     {
       name: 'cnsclick-web',
-      script: './.next/standalone/server.js',
+      script: 'node_modules/next/dist/bin/next',
+      args: 'start',
       env: {
-        NODE_ENV: 'production',
-        PORT: 3000,
+        PORT: process.env.PORT || 3000,
       },
+      watch: false,
+      autorestart: true,
     },
   ],
 };
