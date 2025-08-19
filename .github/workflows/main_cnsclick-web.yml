@@ -68,4 +68,4 @@ jobs:
         with:
           app-name: 'cnsclick-web'
           slot-name: 'Production'
-          package: ./site
+          package: .
