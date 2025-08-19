@@ -15,19 +15,22 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
           cache: 'npm'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Build application
-        run: npm run build
-      
+        run: |
+          npm run build
+          mv ./build/static ./build/standalone/build
+          mv ./public ./build/standalone
+
       - name: Create deployment package
         run: |
           # Only include necessary files for production
@@ -36,7 +39,7 @@ jobs:
           cp -r public deploy-package/ 2>/dev/null || true
           cp package*.json deploy-package/
           cp next.config.* deploy-package/ 2>/dev/null || true
-      
+
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
@@ -54,18 +57,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: node-app
-      
+
       - name: Login to Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_84D51615455148859A3FE23E4ABF79F7 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_0993BE89D9AA4E45A7A6EE08AE3542F4 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_A2ED51F936DE469B8F1A011FB06A2AF4 }}
-      
+
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'cnsclick-web'
           slot-name: 'Production'
-          package: .
+          publish-profile: ${{ env.APPLICATION_PUBLISH_PROFILE }}
+          package: ./build/standalone
