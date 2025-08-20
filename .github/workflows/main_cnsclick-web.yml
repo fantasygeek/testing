@@ -29,11 +29,13 @@ jobs:
       - name: Check if .next folder exists
         run: |
           if [ -d ".next" ]; then
-            echo ".next folder exists ✅"
+            echo "✅ .next folder found. Here's what's inside:"
+            ls -R .next
           else
-            echo ".next folder is missing ❌"
+            echo "❌ .next folder not found."
             exit 1
           fi
+
 
       - name: Prepare standalone folder
         run: |
