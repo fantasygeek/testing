@@ -36,7 +36,6 @@ jobs:
             exit 1
           fi
 
-
       - name: Prepare standalone folder
         run: |
           cp -R ./public ./.next/standalone/public
@@ -49,7 +48,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app
-          path: ./next/standalone
+          path: .next/standalone
 
   deploy:
     runs-on: ubuntu-latest
