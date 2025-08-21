@@ -43,8 +43,16 @@ jobs:
 
       - name: Zip artifact for deployment
         run: |
-          mkdir -p package
-          cp -R .next/* package/
+          mkdir -p package/.next
+          if [ -d ".next/standalone" ]; then
+            cp -R .next/standalone/* package/
+          fi
+          if [ -d ".next/static" ]; then
+            cp -R .next/static package/.next/static
+          fi
+          if [ -d "public" ]; then
+            cp -R public package/public
+          fi
           cd package
           zip -r ../app.zip . -x "node_modules/*"
 
