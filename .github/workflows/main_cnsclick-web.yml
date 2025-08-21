@@ -37,26 +37,92 @@ jobs:
             exit 1
           fi
 
-      - name: copy standalone folder
+      - name: Copy standalone folder
         run: |
-          cp -R ./public ./.next/standalone/public
-          cp -R ./.next/static ./.next/standalone/.next/static
+          # Ensure standalone directory exists
+          if [ ! -d ".next/standalone" ]; then
+            echo "Error: .next/standalone directory not found. Make sure Next.js build created standalone output."
+            exit 1
+          fi
 
-      - name: Zip artifact for deployment
-        run: |
-          mkdir -p package/.next
-          if [ -d ".next/standalone" ]; then
-            cp -R .next/* package/
-          fi
-          if [ -d ".next/static" ]; then
-            cp -R .next/static package/.next/static
-          fi
+          # Copy public folder to standalone
           if [ -d "public" ]; then
-            cp -R public package/public
+            echo "Copying public folder..."
+            cp -R ./public ./.next/standalone/public
+          else
+            echo "Warning: public folder not found"
           fi
-          cd package
-          zip -r app.zip . -x "*.git*" -x "node_modules/*"
 
+          # Copy static folder to standalone
+          if [ -d ".next/static" ]; then
+            echo "Copying static folder..."
+            mkdir -p ./.next/standalone/.next
+            cp -R ./.next/static ./.next/standalone/.next/static
+          else
+            echo "Warning: .next/static folder not found"
+          fi
+
+      - name: Create deployment package
+        run: |
+          # Create package directory
+          mkdir -p package
+
+          # Copy all standalone files to package (including hidden files)
+          echo "Copying standalone files to package..."
+          cp -R .next/standalone/* package/
+          cp -R .next/standalone/.* package/ 2>/dev/null || true
+
+          # CRITICAL: Ensure .next folder exists in package
+          mkdir -p package/.next
+
+          # Copy the entire .next folder structure to package
+          if [ -d ".next" ]; then
+            echo "Copying .next folder structure..."
+            # Copy static assets
+            if [ -d ".next/static" ]; then
+              cp -R .next/static package/.next/static
+            fi
+            # Copy server chunks and other .next contents
+            if [ -d ".next/server" ]; then
+              cp -R .next/server package/.next/server
+            fi
+            # Copy any other .next contents that might be needed
+            for item in .next/*; do
+              if [ -f "$item" ] || [ -d "$item" ]; then
+                basename_item=$(basename "$item")
+                if [ "$basename_item" != "standalone" ]; then
+                  cp -R "$item" "package/.next/"
+                fi
+              fi
+            done
+          fi
+
+          # Verify critical files exist
+          echo "Verifying package contents..."
+          if [ ! -f "package/server.js" ]; then
+            echo "Warning: server.js not found in standalone build"
+          fi
+
+          if [ ! -f "package/package.json" ]; then
+            echo "Warning: package.json not found in standalone build"
+          fi
+
+          if [ ! -d "package/.next" ]; then
+            echo "Error: .next folder missing from package"
+            exit 1
+          else
+            echo ".next folder successfully copied to package"
+            ls -la package/.next/
+          fi
+
+      - name: Create ZIP artifact
+        run: |
+          cd package
+          echo "Creating ZIP file..."
+          zip -r ../app.zip . -x "*.git*" "node_modules/*" "*.DS_Store*"
+          cd ..
+
+          # Verify ZIP was created
           if [ ! -f "app.zip" ]; then
             echo "Error: app.zip was not created"
             exit 1
@@ -67,7 +133,6 @@ jobs:
 
       - name: Inspect ZIP contents
         run: |
-          cd package
           echo "Listing contents of app.zip (first 30 entries):"
           unzip -l app.zip | head -30
           echo "..."
