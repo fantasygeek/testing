@@ -46,7 +46,7 @@ jobs:
         run: |
           mkdir -p package/.next
           if [ -d ".next/standalone" ]; then
-            cp -R .next/standalone/* package/
+            cp -R .next/* package/
           fi
           if [ -d ".next/static" ]; then
             cp -R .next/static package/.next/static
@@ -56,7 +56,7 @@ jobs:
           fi
           cd package
           zip -r app.zip . -x "*.git*" -x "node_modules/*"
-          cd ..
+
           if [ ! -f "app.zip" ]; then
             echo "Error: app.zip was not created"
             exit 1
