@@ -1,20 +1,21 @@
-name: 'Build and Deploy to Azure'
+name: Build and Deploy to Azure
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'
+          node-version: '18'
           cache: 'npm'
 
       - name: Install dependencies
@@ -25,63 +26,58 @@ jobs:
 
       - name: Prepare standalone deployment
         run: |
-          # Create clean deployment folder
           rm -rf deploy
           mkdir deploy
-          
-          # Copy the standalone build (this includes everything needed)
+
           cp -r .next/standalone/* deploy/
-          
-          # Copy static assets
+
           mkdir -p deploy/.next/static
           cp -r .next/static/* deploy/.next/static/
-          
-          # Copy public folder if it exists
+
           if [ -d "public" ]; then
             cp -r public deploy/
           fi
-          
-          # Verify the standalone server.js exists and is correct
+
           if [ -f "deploy/server.js" ]; then
-            echo "✅ Standalone server.js found"
+            echo "Standalone server.js found"
             head -5 deploy/server.js
           else
-            echo "❌ No server.js found in standalone build"
+            echo "No server.js found in standalone build"
             exit 1
           fi
-          
-          # Create Azure-specific files
-          cat > deploy/web.config << 'EOF'
-<?xml version="1.0" encoding="utf-8"?>
-<configuration>
-  <system.webServer>
-    <handlers>
-      <add name="iisnode" path="server.js" verb="*" modules="iisnode"/>
-    </handlers>
-    <rewrite>
-      <rules>
-        <rule name="StaticContent">
-          <conditions>
-            <add input="{REQUEST_URI}" pattern="^/(.*)$"/>
-            <add input="{REQUEST_FILENAME}" matchType="IsFile"/>
-          </conditions>
-          <action type="None"/>
-        </rule>
-        <rule name="DynamicContent">
-          <conditions>
-            <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="True"/>
-          </conditions>
-          <action type="Rewrite" url="server.js"/>
-        </rule>
-      </rules>
-    </rewrite>
-    <httpErrors existingResponse="PassThrough"/>
-  </system.webServer>
-</configuration>
-EOF
 
-          echo "✅ Deployment package ready"
-          echo "Package contents:"
+      - name: Create Azure config files
+        run: |
+          cat > deploy/web.config << 'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <system.webServer>
+              <handlers>
+                <add name="iisnode" path="server.js" verb="*" modules="iisnode"/>
+              </handlers>
+              <rewrite>
+                <rules>
+                  <rule name="StaticContent">
+                    <conditions>
+                      <add input="{REQUEST_URI}" pattern="^/(.*)$"/>
+                      <add input="{REQUEST_FILENAME}" matchType="IsFile"/>
+                    </conditions>
+                    <action type="None"/>
+                  </rule>
+                  <rule name="DynamicContent">
+                    <conditions>
+                      <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="True"/>
+                    </conditions>
+                    <action type="Rewrite" url="server.js"/>
+                  </rule>
+                </rules>
+              </rewrite>
+              <httpErrors existingResponse="PassThrough"/>
+            </system.webServer>
+          </configuration>
+          EOF
+
+          echo "Deployment package ready"
           ls -la deploy/
 
       - name: Upload deployment artifact
@@ -93,6 +89,7 @@ EOF
   deploy:
     runs-on: ubuntu-latest
     needs: build
+
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
