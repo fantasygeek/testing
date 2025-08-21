@@ -27,99 +27,41 @@ jobs:
           npm run build --if-present
           npm run test --if-present
 
-      - name: Clean previous deploy folder if any
+      - name: Check if .next folder exists
         run: |
-          rm -rf deploy && mkdir deploy
-
-      - name: Copy runtime assets to deploy folder
-        run: |
-          rsync -av --progress .next node_modules package.json deploy/
-          echo "Contents of deploy folder:"
-          find deploy -type f
-
-      - name: Confirm next binary is installed and in node_modules/.bin
-        run: |
-          echo "Checking for node_modules/.bin/next:"
-          if [ -f node_modules/.bin/next ]; then
-            echo "Found: node_modules/.bin/next"
+          if [ -d ".next" ]; then
+            echo "✅ .next folder found. Here's what's inside:"
+            ls -R .next
           else
-            echo "Missing: node_modules/.bin/next"
-            exit 1
-          fi
-          echo "Checking resolved path of 'next' using yarn:"
-          if ! PATH=node_modules/.bin:$PATH which next; then
-            echo "'next' not found in PATH"
-            exit 1
-          fi
-          echo "Running 'next --version' to confirm execution:"
-          if ! PATH=node_modules/.bin:$PATH next --version; then
-            echo "Failed to run 'next --version'"
+            echo "❌ .next folder not found."
             exit 1
           fi
 
-      - name: Create deployment ZIP package
+      - name: copy standalone folder
         run: |
-          cd deploy
-          zip -r ../${ZIP_NAME} . -x "node_modules/**/test/**"
-          cd ..
+          cp -R ./public ./.next/standalone/public
+          cp -R ./.next/static ./.next/standalone/.next/static
 
-      - name: Inspect ZIP contents for Next.js CLI
+      - name: Zip artifact for deployment
         run: |
-          echo "Checking if ZIP was created:"
-          if ! ls -lh "${ZIP_NAME}"; then
-            echo "ZIP not found"
-            exit 1
+          mkdir -p package/.next
+          if [ -d ".next/standalone" ]; then
+            cp -R .next/standalone/* package/
           fi
-          echo "Checking for 'node_modules/next/dist/bin/' directory:"
-          if unzip -l "${ZIP_NAME}" | grep -q "node_modules/next/dist/bin/"; then
-            echo "Directory found"
-          else
-            echo "Directory not found"
-            exit 1
+          if [ -d ".next/static" ]; then
+            cp -R .next/static package/.next/static
           fi
-          echo "Checking for 'next' CLI binary:"
-          if unzip -l "${ZIP_NAME}" | grep -q "node_modules/next/dist/bin/next"; then
-            echo "'next' CLI binary found"
-          else
-            echo "'next' CLI binary missing"
-            exit 1
+          if [ -d "public" ]; then
+            cp -R public package/public
           fi
+          cd package
+          zip -r app.zip . -x "*.git*" -x "node_modules/*"
 
-      # - name: Check if .next folder exists
-      #   run: |
-      #     if [ -d ".next" ]; then
-      #       echo "✅ .next folder found. Here's what's inside:"
-      #       ls -R .next
-      #     else
-      #       echo "❌ .next folder not found."
-      #       exit 1
-      #     fi
-
-      # - name: copy standalone folder
-      #   run: |
-      #     cp -R ./public ./.next/standalone/public
-      #     cp -R ./.next/static ./.next/standalone/.next/static
-
-      # - name: Zip artifact for deployment
-      #   run: |
-      #     mkdir -p package/.next
-      #     if [ -d ".next/standalone" ]; then
-      #       cp -R .next/standalone/* package/
-      #     fi
-      #     if [ -d ".next/static" ]; then
-      #       cp -R .next/static package/.next/static
-      #     fi
-      #     if [ -d "public" ]; then
-      #       cp -R public package/public
-      #     fi
-      #     cd package
-      #     zip -r app.zip . -x "*.git*" -x "node_modules/*"
-
-      # - name: Upload artifact for deployment job
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: app
-      #     path: .next/standalone
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: .next/standalone
 
   deploy:
     runs-on: ubuntu-latest
@@ -151,4 +93,4 @@ jobs:
         with:
           app-name: 'cnsclick-web'
           slot-name: 'Production'
-          package: ${{ env.ZIP_NAME }}
+          package: .
