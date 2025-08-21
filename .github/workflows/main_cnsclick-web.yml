@@ -30,11 +30,13 @@ jobs:
       - name: Clean previous deploy folder if any
         run: |
           rm -rf deploy && mkdir deploy
+
       - name: Copy runtime assets to deploy folder
         run: |
-          rsync -av --progress .next node_modules package.json
+          rsync -av --progress .next node_modules package.json deploy/
           echo "Contents of deploy folder:"
           find deploy -type f
+
       - name: Confirm next binary is installed and in node_modules/.bin
         run: |
           echo "Checking for node_modules/.bin/next:"
@@ -54,11 +56,13 @@ jobs:
             echo "Failed to run 'next --version'"
             exit 1
           fi
+
       - name: Create deployment ZIP package
         run: |
           cd deploy
-          zip -r ../${ZIP_NAME} .
+          zip -r ../${ZIP_NAME} . -x "node_modules/**/test/**"
           cd ..
+
       - name: Inspect ZIP contents for Next.js CLI
         run: |
           echo "Checking if ZIP was created:"
