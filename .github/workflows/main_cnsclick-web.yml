@@ -57,17 +57,28 @@ jobs:
           cd package
           zip -r app.zip . -x "*.git*" -x "node_modules/*"
           cd ..
+          if [ ! -f "app.zip" ]; then
+            echo "Error: app.zip was not created"
+            exit 1
+          fi
+
+          echo "ZIP file created successfully. Size:"
+          ls -lh app.zip
 
       - name: Inspect ZIP contents
         run: |
-          echo "Listing contents of app.zip:"
-          unzip -l "app.zip"
+          echo "Listing contents of app.zip (first 30 entries):"
+          unzip -l app.zip | head -30
+          echo "..."
+          echo "Total entries in ZIP:"
+          unzip -l app.zip | tail -1
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: app
           path: app.zip
+          retention-days: 1
 
   deploy:
     runs-on: ubuntu-latest
