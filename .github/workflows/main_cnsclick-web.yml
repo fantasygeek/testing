@@ -67,6 +67,7 @@ jobs:
 
       - name: Inspect ZIP contents
         run: |
+          cd package
           echo "Listing contents of app.zip (first 30 entries):"
           unzip -l app.zip | head -30
           echo "..."
@@ -77,8 +78,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app
-          path: app.zip
-          retention-days: 1
+          path: ./app.zip
 
   deploy:
     runs-on: ubuntu-latest
