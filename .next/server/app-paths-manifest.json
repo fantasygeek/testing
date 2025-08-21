@@ -1,1 +1,10 @@
-{}
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/home/page": "app/home/page.js",
+  "/page": "app/page.js",
+  "/register/hospice/page": "app/register/hospice/page.js",
+  "/register/doctor/page": "app/register/doctor/page.js",
+  "/register/page": "app/register/page.js",
+  "/register/pharmacist/page": "app/register/pharmacist/page.js"
+}

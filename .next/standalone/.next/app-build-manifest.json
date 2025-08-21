@@ -15,14 +15,6 @@
       "static/css/c55801de5f1434f8.css",
       "static/chunks/app/layout-8a8158fdc33fccb8.js"
     ],
-    "/page": [
-      "static/chunks/webpack-8ba223b515e4ba9a.js",
-      "static/chunks/4bd1b696-7e6f0cd8f6aaa61c.js",
-      "static/chunks/684-a086192cd6ab736e.js",
-      "static/chunks/main-app-81ebbabe5672c0a7.js",
-      "static/chunks/498-238086fa2b09acc2.js",
-      "static/chunks/app/page-d9028e8a9d26bcec.js"
-    ],
     "/home/page": [
       "static/chunks/webpack-8ba223b515e4ba9a.js",
       "static/chunks/4bd1b696-7e6f0cd8f6aaa61c.js",
@@ -30,6 +22,14 @@
       "static/chunks/main-app-81ebbabe5672c0a7.js",
       "static/chunks/498-238086fa2b09acc2.js",
       "static/chunks/app/home/page-edaf9b9a6b6e77cc.js"
+    ],
+    "/page": [
+      "static/chunks/webpack-8ba223b515e4ba9a.js",
+      "static/chunks/4bd1b696-7e6f0cd8f6aaa61c.js",
+      "static/chunks/684-a086192cd6ab736e.js",
+      "static/chunks/main-app-81ebbabe5672c0a7.js",
+      "static/chunks/498-238086fa2b09acc2.js",
+      "static/chunks/app/page-d9028e8a9d26bcec.js"
     ],
     "/register/hospice/page": [
       "static/chunks/webpack-8ba223b515e4ba9a.js",

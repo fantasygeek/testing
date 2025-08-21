@@ -1,8 +1,8 @@
 {
   "/_not-found/page": "/_not-found",
   "/favicon.ico/route": "/favicon.ico",
-  "/page": "/",
   "/home/page": "/home",
+  "/page": "/",
   "/register/hospice/page": "/register/hospice",
   "/register/doctor/page": "/register/doctor",
   "/register/page": "/register",
