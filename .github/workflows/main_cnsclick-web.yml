@@ -60,6 +60,7 @@ jobs:
       - name: Inspect ZIP contents
         run: |
           echo "Listing contents of app.zip:"
+          cd package
           unzip -l "app.zip"
 
       # - name: Upload artifact for deployment job
