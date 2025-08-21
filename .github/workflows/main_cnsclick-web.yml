@@ -56,6 +56,8 @@ jobs:
             exit 1
           fi
 
+          ls -R deploy
+
       - name: Create Azure config files
         run: |
           cat > deploy/web.config << 'EOF'
