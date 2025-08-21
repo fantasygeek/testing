@@ -64,7 +64,7 @@ jobs:
           name: app
 
       - name: Unzip artifact for deployment
-        run: unzip release.zip
+        run: unzip app.zip
 
       - name: Login to Azure
         uses: azure/login@v2
