@@ -27,7 +27,7 @@ jobs:
           npm run build --if-present
           npm run test --if-present
 
-            - name: Clean previous deploy folder if any
+      - name: Clean previous deploy folder if any
         run: |
           rm -rf deploy && mkdir deploy
       - name: Copy runtime assets to deploy folder
