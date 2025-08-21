@@ -56,18 +56,18 @@ jobs:
           fi
           cd package
           zip -r app.zip . -x "*.git*" -x "node_modules/*"
+          cd ..
 
       - name: Inspect ZIP contents
         run: |
           echo "Listing contents of app.zip:"
-          cd package
           unzip -l "app.zip"
 
-      # - name: Upload artifact for deployment job
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: app
-      #     path: .next/standalone
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: app.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -81,7 +81,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: app
-          path: ./app
+          path: ./
 
       # - name: Unzip artifact for deployment
       #   run: unzip app.zip
@@ -99,4 +99,4 @@ jobs:
         with:
           app-name: 'cnsclick-web'
           slot-name: 'Production'
-          package: app.zip
+          package: ./app.zip
