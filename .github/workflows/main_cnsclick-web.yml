@@ -42,7 +42,13 @@ jobs:
           cp -R ./.next/static ./.next/standalone/.next/static
 
       - name: Zip artifact for deployment
-        run: zip -r app.zip . -x "node_modules/*"
+        run: |
+          mkdir -p package
+          cp -R .next/standalone/* package/
+          cp -R .next/static package/.next/static
+          cp -R public package/public
+          cd package
+          zip -r ../app.zip . -x "node_modules/*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
