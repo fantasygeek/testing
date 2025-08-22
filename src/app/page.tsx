@@ -2,29 +2,14 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Header } from '@/components/ui/header';
 import Image from 'next/image';
 
 export default function LoginPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Blue header */}
-      <div className="bg-[#1e4b7b] text-white px-6 py-4">
-        <h1 className="text-xl font-medium">Login</h1>
-      </div>
-
-      {/* Logo section - positioned in upper right */}
-      <div className="flex justify-end pr-8 pt-4">
-        <div className="flex flex-col items-center">
-          <Image
-            src="/images/cns-logo.png"
-            alt="CNS Logo"
-            width={120}
-            height={120}
-            className="object-contain"
-          />
-        </div>
-      </div>
-
+      <Header title="CNS Click" />
       {/* Main content */}
       <div className="flex items-center justify-center font-medium py-8 px-10 mx-0">
         <div className="w-full max-w-lg">
