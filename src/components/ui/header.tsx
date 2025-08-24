@@ -5,6 +5,7 @@ import Image from 'next/image';
 
 interface HeaderProps {
   title?: string;
+  leftTitle?: string;
   logoSrc?: string;
   logoAlt?: string;
   logoWidth?: number;
@@ -16,6 +17,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({
   title = 'Login',
+  leftTitle = '',
   logoSrc = '/images/cns-logo.png',
   logoAlt = 'CNS Logo',
   logoWidth = 120,
@@ -31,10 +33,18 @@ const Header: React.FC<HeaderProps> = ({
         <h1 className="text-xl font-medium">{title}</h1>
       </div>
 
-      {/* Logo section - positioned in upper right */}
-      {showLogo && (
-        <div className="flex justify-end pr-8 pt-4">
-          <div className="flex flex-col items-center">
+      {/* Logo and Left Title section */}
+      <div className="flex justify-between items-center px-8 py-4">
+        {/* Left Title - takes available space */}
+        <div className="flex-1">
+          {leftTitle && (
+            <h2 className="text-2xl font-bold text-gray-800">{leftTitle}</h2>
+          )}
+        </div>
+
+        {/* Logo - fixed to the right side */}
+        {showLogo && (
+          <div className="flex-shrink-0 ml-4">
             <Image
               src={logoSrc}
               alt={logoAlt}
@@ -44,8 +54,8 @@ const Header: React.FC<HeaderProps> = ({
               priority
             />
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </header>
   );
 };
