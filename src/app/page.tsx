@@ -8,7 +8,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Blue header */}
-      <Header title="CNS Click" leftTitle="Admin Panel" />
+      <Header title="CNS Click" leftTitle="" />
       {/* Main content */}
       <div className="flex items-center justify-center font-medium py-8 px-10 mx-0">
         <div className="w-full max-w-lg">
