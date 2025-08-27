@@ -9,6 +9,8 @@ on:
   workflow_dispatch:
 env:
   ZIP_NAME: nextapp.zip
+  NEXT_PUBLIC_API_BASE_URL: https://cnsclick-api.azurewebsites.net
+
 jobs:
   build:
     runs-on: ubuntu-latest

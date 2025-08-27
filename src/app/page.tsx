@@ -17,7 +17,7 @@ export default function LoginPage() {
     e.preventDefault();
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const baseUrl = 'https://cnsclick-api.azurewebsites.net';
       if (!baseUrl) {
         throw new Error('API base URL is not defined');
       }
