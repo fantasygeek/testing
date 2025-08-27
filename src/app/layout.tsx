@@ -15,6 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'CNS Click',
   description: 'CNS Click',
+  icons: {
+    icon: 'images/favicon.png',
+    shortcut: 'images/favicon.png',
+  },
 };
 
 export default function RootLayout({
