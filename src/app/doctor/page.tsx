@@ -3,15 +3,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Home,
   ShoppingCart,
-  Building2,
-  Pill,
-  Truck,
   MessageCircle,
   HelpCircle,
   Settings,
@@ -36,9 +30,6 @@ import { StatusCell } from '@/components/ui/status-cell';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('orders');
-  const [userType, setUserType] = useState('nurse');
-  const [emailAddress, setEmailAddress] = useState('');
-  const [confirmEmail, setConfirmEmail] = useState('');
   const [ordersFilter, setOrdersFilter] = useState('all');
 
   const menuItems = [
