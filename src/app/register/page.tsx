@@ -11,6 +11,11 @@ import { useState } from 'react';
 
 export default function RegisterPage() {
   const [userType, setUserType] = useState('doctor'); // default value
+  const [email, setEmail] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
   const router = useRouter();
 
   const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -18,7 +23,30 @@ export default function RegisterPage() {
   };
 
   const handleContinueClick = () => {
-    console.log('Selected user type:', userType);
+    // Basic email match check
+    if (email !== confirmEmail) {
+      alert('Email addresses do not match');
+      return;
+    }
+
+    // Basic password match check
+    if (password !== confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+
+    // Password strength check
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,72}$/;
+    if (!passwordRegex.test(password)) {
+      alert('Password does not meet complexity requirements');
+      return;
+    }
+
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('userType', userType);
+      localStorage.setItem('email', email);
+      localStorage.setItem('password', password);
+    }
 
     // Conditional navigation based on selected value
     if (userType === 'doctor') {
@@ -133,6 +161,8 @@ export default function RegisterPage() {
                     <Input
                       id="email"
                       type="email"
+                      onChange={(e) => setEmail(e.target.value)}
+                      value={email}
                       className="bg-white border-gray-300 rounded-lg px-0 h-10 w-72"
                       required
                     />
@@ -147,6 +177,8 @@ export default function RegisterPage() {
                     <Input
                       id="password"
                       type="password"
+                      onChange={(e) => setPassword(e.target.value)}
+                      value={password}
                       className="bg-white border-gray-300 rounded-lg h-10 w-72"
                       required
                     />
@@ -165,6 +197,8 @@ export default function RegisterPage() {
                     <Input
                       id="confirmEmail"
                       type="email"
+                      onChange={(e) => setConfirmEmail(e.target.value)}
+                      value={confirmEmail}
                       className="bg-white border-gray-300 h-10 rounded-lg w-72"
                       required
                     />
@@ -179,6 +213,8 @@ export default function RegisterPage() {
                     <Input
                       id="confirmPassword"
                       type="password"
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      value={confirmPassword}
                       className="bg-white border-gray-300 rounded-lg h-10 w-72"
                       required
                     />
