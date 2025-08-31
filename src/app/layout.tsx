@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   title: 'CNS Click',
   description: 'CNS Click',
   icons: {
-    icon: 'images/favicon.png',
-    shortcut: 'images/favicon.png',
+    icon: '/images/favicon.png',
+    shortcut: '/images/favicon.png',
   },
 };
 

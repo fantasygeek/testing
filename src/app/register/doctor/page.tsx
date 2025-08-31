@@ -43,6 +43,7 @@ export default function RegisterDoctorPage() {
       LicensePlaceIssued,
       LicensePracticeBy,
       Username,
+      Password,
       UserType,
     };
 
@@ -56,7 +57,7 @@ export default function RegisterDoctorPage() {
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: payload.toString(),
       });
-
+      console.log('Response status:', res);
       if (!res.ok) {
         throw new Error('Failed to submit');
       }
@@ -195,7 +196,7 @@ export default function RegisterDoctorPage() {
                             type="radio"
                             name="gender"
                             value="male"
-                            checked={gender === 'male'}
+                            checked={Gender === 'male'}
                             onChange={(e) => setGender(e.target.value)}
                             className="sr-only peer"
                           />
@@ -211,7 +212,7 @@ export default function RegisterDoctorPage() {
                             type="radio"
                             name="gender"
                             value="female"
-                            checked={gender === 'female'}
+                            checked={Gender === 'female'}
                             onChange={(e) => setGender(e.target.value)}
                             className="sr-only peer"
                           />
@@ -235,7 +236,7 @@ export default function RegisterDoctorPage() {
                     <Input
                       id="facility"
                       type="text"
-                      value={facility}
+                      value={Facility}
                       onChange={(e) => setFacility(e.target.value)}
                       className="bg-white border-gray-300 rounded-lg h-10 flex-1"
                     />
@@ -255,7 +256,7 @@ export default function RegisterDoctorPage() {
                       id="lastName"
                       type="text"
                       required
-                      value={lastName}
+                      value={LastName}
                       onChange={(e) => setLastName(e.target.value)}
                       className="bg-white border-gray-300 rounded-lg h-10 flex-1"
                     />
@@ -285,7 +286,7 @@ export default function RegisterDoctorPage() {
                       id="licenseNo"
                       type="text"
                       onChange={(e) => setLicenseNo(e.target.value)}
-                      value={licenseNo}
+                      value={LicenseNo}
                       className="bg-white border-gray-300 rounded-lg h-10 flex-1"
                     />
                   </div>
@@ -300,7 +301,7 @@ export default function RegisterDoctorPage() {
                       id="dateIssue"
                       type="date"
                       onChange={(e) => setDateIssue(e.target.value)}
-                      value={dateIssue}
+                      value={LicenseDateIssue}
                       className="bg-white border-gray-300 rounded-lg h-10 flex-1"
                     />
                   </div>
@@ -315,7 +316,7 @@ export default function RegisterDoctorPage() {
                       id="validUntil"
                       type="date"
                       onChange={(e) => setValidUntil(e.target.value)}
-                      value={validUntil}
+                      value={LicenseValidUntil}
                       className="bg-white border-gray-300 rounded-lg h-10 flex-1"
                     />
                   </div>
@@ -334,7 +335,7 @@ export default function RegisterDoctorPage() {
                       id="issuedBy"
                       type="text"
                       onChange={(e) => setIssuedBy(e.target.value)}
-                      value={issuedBy}
+                      value={LicenseIssuedBy}
                       className="bg-white border-gray-300 rounded-lg h-10 flex-1"
                     />
                   </div>
@@ -349,7 +350,7 @@ export default function RegisterDoctorPage() {
                       id="placeOfIssue"
                       type="text"
                       onChange={(e) => setPlaceOfIssue(e.target.value)}
-                      value={placeOfIssue}
+                      value={LicensePlaceIssued}
                       className="bg-white border-gray-300 rounded-lg h-10 flex-1"
                     />
                   </div>
@@ -364,7 +365,7 @@ export default function RegisterDoctorPage() {
                       id="practiceBy"
                       type="text"
                       onChange={(e) => setPracticeBy(e.target.value)}
-                      value={practiceBy}
+                      value={LicensePracticeBy}
                       className="bg-white border-gray-300 rounded-lg h-10 flex-1"
                     />
                   </div>
