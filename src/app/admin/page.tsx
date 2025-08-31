@@ -33,6 +33,9 @@ import {
   type GridRenderCellParams,
 } from '@mui/x-data-grid';
 import { StatusCell } from '@/components/ui/status-cell';
+import { ChooseDoctorPopup } from '@/dialogs/choose-doctor-popup';
+import { PatientDetailsPopup } from '@/dialogs/patient-details-popup';
+import { SaveWarningDialog } from '@/dialogs/save-warning-dialog';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('home');
@@ -40,6 +43,21 @@ export default function Dashboard() {
   const [emailAddress, setEmailAddress] = useState('');
   const [confirmEmail, setConfirmEmail] = useState('');
   const [ordersFilter, setOrdersFilter] = useState('all');
+  const [showModifyOrder, setShowModifyOrder] = useState(false);
+  const [showChooseDoctorPopup, setShowChooseDoctorPopup] = useState(false);
+  const [showPatientDetailsPopup, setShowPatientDetailsPopup] = useState(false);
+  const [showSaveWarning, setShowSaveWarning] = useState(false);
+  const [drugRows, setDrugRows] = useState([
+    {
+      id: 1,
+      rxNumber: '123',
+      fillDate: '01/22/2024',
+      drugName: 'Drug 1',
+      quantity: 'tablet',
+      units: '10',
+      strength: '0.5',
+    },
+  ]);
 
   const menuItems = [
     { id: 'home', label: 'Home', icon: Home },
@@ -53,7 +71,6 @@ export default function Dashboard() {
     { id: 'logout', label: 'Log out', icon: LogOut },
   ];
 
-  // MUI DataGrid data for orders
   const orderRows: GridRowsProp = [
     {
       id: 1,
@@ -93,7 +110,6 @@ export default function Dashboard() {
     },
   ];
 
-  // Custom cell renderer for Order Date
   const OrderDateCell = ({ value }: { value: string }) => {
     const [date, time] = value.split('\n');
     return (
@@ -104,7 +120,6 @@ export default function Dashboard() {
     );
   };
 
-  // Custom cell renderer for Location
   const LocationCell = ({ value }: { value: string }) => {
     const [name, address] = value.split('\n');
     return (
@@ -115,8 +130,11 @@ export default function Dashboard() {
     );
   };
 
-  // Custom cell renderer for Order By with dropdown
   const OrderByCell = ({ value }: { value: string }) => {
+    const handleModifyOrder = () => {
+      setShowModifyOrder(true);
+    };
+
     return (
       <div className="flex items-center justify-between w-full">
         <span className="text-gray-900 text-sm">{value}</span>
@@ -129,7 +147,9 @@ export default function Dashboard() {
           <DropdownMenuContent align="end">
             <DropdownMenuItem>Resend Confirmation</DropdownMenuItem>
             <DropdownMenuItem>Cancel Order</DropdownMenuItem>
-            <DropdownMenuItem>Modify Order</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleModifyOrder}>
+              Modify Order
+            </DropdownMenuItem>
             <DropdownMenuItem>Approved Order</DropdownMenuItem>
             <DropdownMenuItem>Track Order</DropdownMenuItem>
           </DropdownMenuContent>
@@ -138,7 +158,6 @@ export default function Dashboard() {
     );
   };
 
-  // Column definitions for MUI DataGrid
   const orderColumns: GridColDef[] = [
     {
       field: 'orderid',
@@ -190,7 +209,174 @@ export default function Dashboard() {
     },
   ];
 
+  const handleDeleteDrug = (id: number) => {
+    setDrugRows(drugRows.filter((row) => row.id !== id));
+  };
+
+  const handleAddNewDrug = () => {
+    const newId = Math.max(...drugRows.map((row) => row.id)) + 1;
+    setDrugRows([
+      ...drugRows,
+      {
+        id: newId,
+        rxNumber: '',
+        fillDate: '',
+        drugName: '',
+        quantity: '',
+        units: '',
+        strength: '',
+      },
+    ]);
+  };
+
+  const handleSaveOrder = () => {
+    setShowSaveWarning(true);
+  };
+
   const renderContent = () => {
+    if (showModifyOrder) {
+      return (
+        <div className="p-8">
+          <h1 className="text-2xl font-semibold text-black mb-8">
+            Modify Order
+          </h1>
+          <div className="bg-[#eaeaea] px-8 py-8 min-h-[600px] rounded-lg">
+            <div className="max-w-6xl mx-auto">
+              <div className="grid grid-cols-2 gap-8">
+                {/* First Column */}
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2">
+                    <label className="text-gray-600 font-normal text-sm min-w-[120px]">
+                      Order ID
+                    </label>
+                    <input
+                      type="text"
+                      className="bg-white border border-gray-300 rounded-lg h-10 flex-1 px-3"
+                    />
+                  </div>
+
+                  <div className="flex items-start gap-2">
+                    <label className="text-gray-600 font-normal text-sm min-w-[120px] mt-2">
+                      Patient Details
+                    </label>
+                    <div className="flex-1">
+                      <textarea className="bg-white border border-gray-300 rounded-lg h-20 w-full px-3 py-2 resize-none" />
+                      <button
+                        onClick={() => setShowPatientDetailsPopup(true)}
+                        className="mt-2 bg-[#5cb3f0] text-white px-4 py-1 rounded text-sm hover:bg-[#4a9fd9]"
+                      >
+                        Change/Add
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label className="text-gray-600 font-normal text-sm min-w-[120px]">
+                      Status
+                    </label>
+                    <input
+                      type="text"
+                      className="bg-white border border-gray-300 rounded-lg h-10 flex-1 px-3"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label className="text-gray-600 font-normal text-sm min-w-[120px]">
+                      Pharmacy
+                    </label>
+                    <input
+                      type="text"
+                      className="bg-white border border-gray-300 rounded-lg h-10 flex-1 px-3"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label className="text-gray-600 font-normal text-sm min-w-[120px]">
+                      Order
+                    </label>
+                    <input
+                      type="text"
+                      className="bg-white border border-gray-300 rounded-lg h-10 flex-1 px-3"
+                    />
+                  </div>
+
+                  <div className="flex items-start gap-2">
+                    <label className="text-gray-600 font-normal text-sm min-w-[120px] mt-2">
+                      Doctor
+                    </label>
+                    <div className="flex-1">
+                      <textarea className="bg-white border border-gray-300 rounded-lg h-20 w-full px-3 py-2 resize-none" />
+                      <button
+                        onClick={() => setShowChooseDoctorPopup(true)}
+                        className="mt-2 bg-[#5cb3f0] text-white px-4 py-1 rounded text-sm hover:bg-[#4a9fd9]"
+                      >
+                        Choose Doctor
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label className="text-gray-600 font-normal text-sm min-w-[120px]">
+                      Delivery Address
+                    </label>
+                    <input
+                      type="text"
+                      className="bg-white border border-gray-300 rounded-lg h-10 flex-1 px-3"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label className="text-gray-600 font-normal text-sm min-w-[120px]">
+                      Approval
+                    </label>
+                    <input
+                      type="text"
+                      className="bg-white border border-gray-300 rounded-lg h-10 flex-1 px-3"
+                    />
+                  </div>
+                </div>
+
+                {/* Second Column */}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-gray-600 font-normal text-sm min-w-[120px]">
+                      Date Order
+                    </label>
+                    <input
+                      type="text"
+                      className="bg-white border border-gray-300 rounded-lg h-10 flex-1 px-3"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-center gap-4 mt-8">
+                <button
+                  onClick={handleSaveOrder}
+                  className="bg-[#0077bb] text-white px-6 py-2 rounded hover:bg-[#005599]"
+                >
+                  Save Order
+                </button>
+                <button className="bg-[#0077bb] text-white px-6 py-2 rounded hover:bg-[#005599]">
+                  Message
+                </button>
+                <button className="bg-red-500 text-white px-6 py-2 rounded hover:bg-red-600">
+                  Cancel Order
+                </button>
+                <button
+                  onClick={() => setShowModifyOrder(false)}
+                  className="bg-gray-400 text-white px-6 py-2 rounded hover:bg-gray-500"
+                >
+                  Back
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     if (activeTab === 'home') {
       return (
         <div className="p-8">
@@ -347,6 +533,182 @@ export default function Dashboard() {
       );
     }
 
+    if (activeTab === 'pharmacist') {
+      return (
+        <div className="p-8">
+          <h1 className="text-2xl font-semibold text-black mb-8">Pharmacist</h1>
+          <div className="bg-[#eaeaea] px-8 py-8 min-h-[600px] rounded-lg">
+            <div className="max-w-6xl mx-auto">
+              {/* Personal Details Section */}
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-600 mb-6">
+                  Personal Details
+                </h3>
+
+                {/* Row 1: ID only - full width */}
+                <div className="mb-6 flex items-center gap-2">
+                  <label
+                    htmlFor="id"
+                    className="text-gray-600 font-normal text-sm min-w-[100px]"
+                  >
+                    ID
+                  </label>
+                  <input
+                    id="id"
+                    type="text"
+                    className="bg-white border border-gray-300 rounded-lg h-10 max-w-md w-64 px-3"
+                  />
+                </div>
+
+                {/* Row 2: First name, middle name, last name - three columns */}
+                <div className="grid grid-cols-3 gap-6 mb-6">
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="firstName"
+                      className="text-gray-600 font-normal text-sm min-w-[100px]"
+                    >
+                      First Name
+                    </label>
+                    <input
+                      id="firstName"
+                      type="text"
+                      className="bg-white border border-gray-300 rounded-lg h-10 flex-1 px-3"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="middleName"
+                      className="text-gray-600 font-normal text-sm min-w-[100px]"
+                    >
+                      Middle Name
+                    </label>
+                    <input
+                      id="middleName"
+                      type="text"
+                      className="bg-white border border-gray-300 rounded-lg h-10 flex-1 px-3"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="lastName"
+                      className="text-gray-600 font-normal text-sm min-w-[100px]"
+                    >
+                      Last Name
+                    </label>
+                    <input
+                      id="lastName"
+                      type="text"
+                      className="bg-white border border-gray-300 rounded-lg h-10 flex-1 px-3"
+                    />
+                  </div>
+                </div>
+
+                {/* Row 3: Date of birth, gender - two columns with empty third */}
+                <div className="grid grid-cols-3 gap-6 mb-6">
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="dateOfBirth"
+                      className="text-gray-600 font-normal text-sm min-w-[100px]"
+                    >
+                      Date of Birth
+                    </label>
+                    <input
+                      id="dateOfBirth"
+                      type="date"
+                      className="bg-white border border-gray-300 rounded-lg h-10 flex-1 px-3"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-gray-600 font-normal text-sm min-w-[100px]">
+                      Gender
+                    </label>
+                    <div className="flex gap-6 flex-1">
+                      <label className="flex items-center cursor-pointer">
+                        <div className="relative">
+                          <input
+                            type="radio"
+                            name="gender"
+                            value="male"
+                            className="sr-only peer"
+                          />
+                          <div className="w-4 h-4 border-2 border-gray-400 rounded-full peer-checked:border-[#0077bb] peer-checked:bg-[#0077bb] flex items-center justify-center">
+                            <div className="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
+                          </div>
+                        </div>
+                        <span className="text-gray-600 text-sm ml-2">Male</span>
+                      </label>
+                      <label className="flex items-center cursor-pointer">
+                        <div className="relative">
+                          <input
+                            type="radio"
+                            name="gender"
+                            value="female"
+                            className="sr-only peer"
+                          />
+                          <div className="w-4 h-4 border-2 border-gray-400 rounded-full peer-checked:border-[#0077bb] peer-checked:bg-[#0077bb] flex items-center justify-center">
+                            <div className="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
+                          </div>
+                        </div>
+                        <span className="text-gray-600 text-sm ml-2">
+                          Female
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                  <div></div> {/* Empty third column */}
+                </div>
+
+                {/* Row 4: Mobile number only - one column with empty second and third */}
+                <div className="grid grid-cols-3 gap-6 mb-6">
+                  <div className="flex items-center gap-2">
+                    <label
+                      htmlFor="mobileNumber"
+                      className="text-gray-600 font-normal text-sm min-w-[100px]"
+                    >
+                      Mobile Number
+                    </label>
+                    <input
+                      id="mobileNumber"
+                      type="tel"
+                      className="bg-white border border-gray-300 rounded-lg h-10 flex-1 px-3"
+                    />
+                  </div>
+                  <div></div> {/* Empty second column */}
+                  <div></div> {/* Empty third column */}
+                </div>
+
+                {/* Info text instead of checkbox */}
+                <div className="flex justify-center mb-6">
+                  <span className="text-gray-600 text-sm">
+                    This will send invite to New Pharmacy added to activate
+                  </span>
+                </div>
+
+                {/* Bottom section with buttons */}
+                <div className="relative pt-4">
+                  {/* Buttons - centered */}
+                  <div className="flex justify-center gap-4 mb-8">
+                    <button
+                      type="button"
+                      className="bg-[#0077bb] hover:bg-[#005599] text-white text-base font-medium rounded-lg h-12 px-8"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      className="bg-gray-400 hover:bg-gray-500 text-white text-base font-medium rounded-lg h-12 px-8"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="p-8">
         <h1 className="text-2xl font-semibold text-black mb-8">
@@ -435,6 +797,24 @@ export default function Dashboard() {
         {/* Main Content */}
         <main className="flex-1 bg-white">{renderContent()}</main>
       </div>
+
+      {/* External Dialog Components */}
+      <ChooseDoctorPopup
+        open={showChooseDoctorPopup}
+        onOpenChange={setShowChooseDoctorPopup}
+        drugRows={drugRows}
+        onDeleteDrug={handleDeleteDrug}
+        onAddNewDrug={handleAddNewDrug}
+        onUpdateDrug={setDrugRows}
+      />
+      <PatientDetailsPopup
+        open={showPatientDetailsPopup}
+        onOpenChange={setShowPatientDetailsPopup}
+      />
+      <SaveWarningDialog
+        open={showSaveWarning}
+        onOpenChange={setShowSaveWarning}
+      />
     </div>
   );
 }
