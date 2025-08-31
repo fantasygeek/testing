@@ -1,32 +1,98 @@
 'use client';
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import React from 'react';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
+import Link from 'next/link';
 
 export default function RegisterPage() {
-  const [userType, setUserType] = useState('doctor'); // default value
+  const [userType, setUserType] = useState('doctor');
+  const [email, setEmail] = useState('');
+  const [confirmEmail, setConfirmEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Error states
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [generalError, setGeneralError] = useState('');
+
   const router = useRouter();
 
   const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUserType(event.target.value);
   };
 
-  const handleContinueClick = () => {
-    console.log('Selected user type:', userType);
+  const validateForm = () => {
+    const newErrors: {
+      email?: string;
+      confirmEmail?: string;
+      password?: string;
+      confirmPassword?: string;
+    } = {};
 
-    // Conditional navigation based on selected value
-    if (userType === 'doctor') {
-      router.push('/register/doctor');
-    } else if (userType === 'hospice') {
-      router.push('/register/hospice');
-    } else if (userType === 'pharmacist') {
-      router.push('/register/pharmacist');
+    // Clear previous errors
+    setGeneralError('');
+    setErrors({});
+
+    // Email validation
+    if (!email) {
+      newErrors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      newErrors.email = 'Please enter a valid email address';
+    }
+
+    // Confirm email validation
+    if (!confirmEmail) {
+      newErrors.confirmEmail = 'Please confirm your email';
+    } else if (email !== confirmEmail) {
+      newErrors.confirmEmail = 'Email addresses do not match';
+    }
+
+    // Password validation
+    if (!password) {
+      newErrors.password = 'Password is required';
+    } else {
+      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).{8,72}$/;
+      if (!passwordRegex.test(password)) {
+        newErrors.password = 'Password does not meet complexity requirements';
+      }
+    }
+
+    // Confirm password validation
+    if (!confirmPassword) {
+      newErrors.confirmPassword = 'Please confirm your password';
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleContinueClick = () => {
+    if (!validateForm()) {
+      setGeneralError('Please fix the errors above before continuing');
+      return;
+    }
+
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('userType', userType);
+        localStorage.setItem('email', email);
+        localStorage.setItem('password', password);
+      }
+
+      // Conditional navigation based on selected value
+      if (userType === 'doctor') {
+        router.push('/register/doctor');
+      } else if (userType === 'hospice') {
+        router.push('/register/hospice');
+      } else if (userType === 'pharmacist') {
+        router.push('/register/pharmacist');
+      }
+    } catch (error) {
+      console.error('An error occurred.:', error);
+      setGeneralError('An error occurred. Please try again.');
     }
   };
 
@@ -63,12 +129,32 @@ export default function RegisterPage() {
               behalf of someone else.
             </p>
 
+            {/* General Error Message */}
+            {generalError && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                <div className="flex items-center">
+                  <svg
+                    className="w-5 h-5 mr-2"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  {generalError}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-6">
               {/* Register Me As section */}
               <div>
-                <Label className="text-gray-600 font-normal text-sm mb-3 block">
+                <label className="text-gray-600 font-normal text-sm mb-3 block">
                   Register Me As:
-                </Label>
+                </label>
                 <div className="flex gap-6">
                   <label className="flex items-center cursor-pointer">
                     <div className="relative">
@@ -124,64 +210,128 @@ export default function RegisterPage() {
                 {/* Left column */}
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <Label
+                    <label
                       htmlFor="email"
                       className="text-gray-600 font-normal text-sm"
                     >
                       Email Address
-                    </Label>
-                    <Input
+                    </label>
+                    <input
                       id="email"
                       type="email"
-                      className="bg-white border-gray-300 rounded-lg px-0 h-10 w-72"
+                      tabIndex={1}
+                      onChange={(e) => setEmail(e.target.value)}
+                      value={email}
+                      className={`bg-white border rounded-lg px-3 h-10 w-72 ${
+                        errors.email
+                          ? 'border-red-400 focus:border-red-400'
+                          : 'border-gray-300 focus:border-blue-500'
+                      } focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                        errors.email
+                          ? 'focus:ring-red-400'
+                          : 'focus:ring-blue-500'
+                      }`}
                       required
                     />
+                    {errors.email && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-1">
-                    <Label
+                    <label
                       htmlFor="password"
                       className="text-gray-600 font-normal text-sm"
                     >
                       Password
-                    </Label>
-                    <Input
+                    </label>
+                    <input
                       id="password"
                       type="password"
-                      className="bg-white border-gray-300 rounded-lg h-10 w-72"
+                      tabIndex={3}
+                      onChange={(e) => setPassword(e.target.value)}
+                      value={password}
+                      className={`bg-white border rounded-lg px-3 h-10 w-72 ${
+                        errors.password
+                          ? 'border-red-400 focus:border-red-400'
+                          : 'border-gray-300 focus:border-blue-500'
+                      } focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                        errors.password
+                          ? 'focus:ring-red-400'
+                          : 'focus:ring-blue-500'
+                      }`}
                       required
                     />
+                    {errors.password && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors.password}
+                      </p>
+                    )}
                   </div>
                 </div>
 
                 {/* Right column */}
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <Label
+                    <label
                       htmlFor="confirmEmail"
                       className="text-gray-600 font-normal text-sm"
                     >
                       Confirm Email
-                    </Label>
-                    <Input
+                    </label>
+                    <input
                       id="confirmEmail"
                       type="email"
-                      className="bg-white border-gray-300 h-10 rounded-lg w-72"
+                      tabIndex={2}
+                      onChange={(e) => setConfirmEmail(e.target.value)}
+                      value={confirmEmail}
+                      className={`bg-white border rounded-lg px-3 h-10 w-72 ${
+                        errors.confirmEmail
+                          ? 'border-red-400 focus:border-red-400'
+                          : 'border-gray-300 focus:border-blue-500'
+                      } focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                        errors.confirmEmail
+                          ? 'focus:ring-red-400'
+                          : 'focus:ring-blue-500'
+                      }`}
                       required
                     />
+                    {errors.confirmEmail && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors.confirmEmail}
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-1">
-                    <Label
+                    <label
                       htmlFor="confirmPassword"
                       className="text-gray-600 font-normal text-sm"
                     >
                       Confirm Password
-                    </Label>
-                    <Input
+                    </label>
+                    <input
                       id="confirmPassword"
                       type="password"
-                      className="bg-white border-gray-300 rounded-lg h-10 w-72"
+                      tabIndex={4}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      value={confirmPassword}
+                      className={`bg-white border rounded-lg px-3 h-10 w-72 ${
+                        errors.confirmPassword
+                          ? 'border-red-400 focus:border-red-400'
+                          : 'border-gray-300 focus:border-blue-500'
+                      } focus:outline-none focus:ring-2 focus:ring-opacity-50 ${
+                        errors.confirmPassword
+                          ? 'focus:ring-red-400'
+                          : 'focus:ring-blue-500'
+                      }`}
                       required
                     />
+                    {errors.confirmPassword && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors.confirmPassword}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -204,13 +354,14 @@ export default function RegisterPage() {
 
                 {/* Continue button */}
                 <div className="ml-8">
-                  <Button
+                  <button
                     type="submit"
+                    tabIndex={5}
                     onClick={handleContinueClick}
-                    className="bg-[#0077bb] hover:bg-[#005599] text-white text-base font-medium rounded-lg border-0 h-12 w-44 px-8 text-center"
+                    className="bg-[#0077bb] hover:bg-[#005599] text-white text-base font-medium rounded-lg border-0 h-12 w-44 px-8 text-center transition-colors"
                   >
                     Continue
-                  </Button>
+                  </button>
                 </div>
               </div>
 
