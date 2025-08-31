@@ -32,7 +32,7 @@ export default function LoginPage() {
       }
 
       const result = await res.json();
-
+      console.log('Response status:', result);
       if (result.success && result.data) {
         const { jwtToken, roles } = result.data;
         localStorage.setItem('jwtToken', jwtToken);
@@ -43,7 +43,7 @@ export default function LoginPage() {
           router.push('/admin');
         }
       } else {
-        alert(result.messages?.[0] || 'Login failed');
+        alert(result.messages?.[0]?.details || 'Login failed');
       }
     } catch (err) {
       console.error(err);
