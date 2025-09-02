@@ -1,41 +1,42 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import Image from "next/image"
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import HeaderWithLogo from '@/components/ui/blue-header';
 
 export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Blue header */}
-      <div className="bg-[#1e4b7b] text-white px-6 py-4">
-        <h1 className="text-xl font-medium">Login</h1>
-      </div>
-
-      {/* Logo section - positioned in upper right */}
-      <div className="flex justify-end pr-8 pt-4">
-        <div className="flex flex-col items-center">
-          <Image src="/images/cns-main-logo.png" alt="CNS Logo" width={120} height={120} className="object-contain" />
-          <p className="text-[#0077bb] mt-1 text-3xl font-normal">Click</p>
-        </div>
-      </div>
+      <HeaderWithLogo title="CNS Click"  />
 
       {/* Main content */}
       <div className="flex items-center justify-center font-medium py-8 px-10 mx-0">
         <div className="w-full max-w-4xl">
           {/* Registration form container */}
           <div className="bg-[#eaeaea] p-8 shadow-sm px-36">
-            <h2 className="text-2xl font-bold text-black mb-2">Register for an Account</h2>
-            <p className="text-black text-sm mb-6">The registration is only available by invite by Hospice 0001</p>
+            <h2 className="text-2xl font-bold text-black mb-2">
+              Register for an Account
+            </h2>
+            <p className="text-black text-sm mb-6">
+              The registration is only available by invite by Hospice 0001
+            </p>
 
             <div className="space-y-6">
               {/* Register Me As section */}
               <div>
-                <Label className="text-gray-600 font-normal text-sm mb-3 block">Register Me As:</Label>
+                <Label className="text-gray-600 font-normal text-sm mb-3 block">
+                  Register Me As:
+                </Label>
                 <div className="flex gap-6">
                   <label className="flex items-center cursor-pointer">
                     <div className="relative">
-                      <input type="radio" name="userType" value="nurse" className="sr-only peer" defaultChecked />
+                      <input
+                        type="radio"
+                        name="userType"
+                        value="nurse"
+                        className="sr-only peer"
+                        defaultChecked
+                      />
                       <div className="w-4 h-4 border-2 border-gray-400 rounded-full peer-checked:border-[#0077bb] peer-checked:bg-[#0077bb] flex items-center justify-center">
                         <div className="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
                       </div>
@@ -44,7 +45,12 @@ export default function RegisterPage() {
                   </label>
                   <label className="flex items-center cursor-pointer">
                     <div className="relative">
-                      <input type="radio" name="userType" value="patient" className="sr-only peer" />
+                      <input
+                        type="radio"
+                        name="userType"
+                        value="patient"
+                        className="sr-only peer"
+                      />
                       <div className="w-4 h-4 border-2 border-gray-400 rounded-full peer-checked:border-[#0077bb] peer-checked:bg-[#0077bb] flex items-center justify-center">
                         <div className="w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100"></div>
                       </div>
@@ -59,7 +65,10 @@ export default function RegisterPage() {
                 {/* Left column */}
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <Label htmlFor="email" className="text-gray-600 font-normal text-sm">
+                    <Label
+                      htmlFor="email"
+                      className="text-gray-600 font-normal text-sm"
+                    >
                       Email Address
                     </Label>
                     <Input
@@ -70,7 +79,10 @@ export default function RegisterPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="password" className="text-gray-600 font-normal text-sm">
+                    <Label
+                      htmlFor="password"
+                      className="text-gray-600 font-normal text-sm"
+                    >
                       Password
                     </Label>
                     <Input
@@ -85,7 +97,10 @@ export default function RegisterPage() {
                 {/* Right column */}
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <Label htmlFor="confirmEmail" className="text-gray-600 font-normal text-sm">
+                    <Label
+                      htmlFor="confirmEmail"
+                      className="text-gray-600 font-normal text-sm"
+                    >
                       Confirm Email
                     </Label>
                     <Input
@@ -96,7 +111,10 @@ export default function RegisterPage() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="confirmPassword" className="text-gray-600 font-normal text-sm">
+                    <Label
+                      htmlFor="confirmPassword"
+                      className="text-gray-600 font-normal text-sm"
+                    >
                       Confirm Password
                     </Label>
                     <Input
@@ -113,7 +131,9 @@ export default function RegisterPage() {
               <div className="flex justify-between items-start pt-4">
                 {/* Password requirements */}
                 <div>
-                  <h3 className="text-black font-bold text-sm mb-2">Password Must:</h3>
+                  <h3 className="text-black font-bold text-sm mb-2">
+                    Password Must:
+                  </h3>
                   <ul className="text-black text-xs space-y-1">
                     <li>• Minimum of 8 characters</li>
                     <li>• Contain one upper case letter</li>
@@ -136,7 +156,10 @@ export default function RegisterPage() {
 
               {/* Need help link */}
               <div className="text-left pt-2">
-                <Link href="/help" className="text-[#0077bb] hover:text-[#005599] text-sm">
+                <Link
+                  href="/help"
+                  className="text-[#0077bb] hover:text-[#005599] text-sm"
+                >
                   Need Help ?
                 </Link>
               </div>
@@ -145,5 +168,5 @@ export default function RegisterPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
