@@ -2,43 +2,16 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import Image from 'next/image';
+import HeaderWithLogo from '@/components/ui/blue-header';
 
 export default function RegisterDoctorPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Blue header */}
-      <div className="bg-[#1e4b7b] text-white px-6 py-4">
-        <h1 className="text-xl font-medium">Login</h1>
-      </div>
-
-      {/* Main content with logo and form */}
-      <div className="flex">
-        {/* Left side - Title and description */}
-        <div className="flex-1 px-8 py-6">
-          <div className="mb-8">
-            <h2 className="text-3xl font-bold text-black mb-4">
-              Register me as Nurse
-            </h2>
-            <p className="text-black text-base">
-              This account is invited and register by Hospice / Medical facility
-            </p>
-          </div>
-        </div>
-
-        {/* Right side - Logo */}
-        <div className="flex justify-end pr-8 pt-6">
-          <div className="flex flex-col items-center">
-            <Image
-              src="/images/cns-logo.png"
-              alt="CNS Logo"
-              width={150}
-              height={150}
-              className="object-contain"
-            />
-          </div>
-        </div>
-      </div>
+      <HeaderWithLogo
+        title="CNS Click"
+        MainTitle="Register me as Nurse"
+        SubTitle="This account is invited and register by Hospice / Medical facility"
+      />
 
       {/* Large gray form section */}
       <div className="bg-[#eaeaea] mx-0 px-8 py-8 min-h-[600px]">
