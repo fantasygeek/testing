@@ -48,14 +48,10 @@ export default function RegisterDoctorPage() {
     };
 
     try {
-      const baseUrl = 'https://cnsclick-api.azurewebsites.net';
-      if (!baseUrl) {
-        throw new Error('API base URL is not defined');
-      }
-      const res = await fetch(`${baseUrl}/api/user/register`, {
+      const res = await fetch('/api/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: payload.toString(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
       });
       console.log('Response status:', res);
       if (!res.ok) {
