@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -31,6 +31,56 @@ import { StatusCell } from '@/components/ui/status-cell';
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('orders');
   const [ordersFilter, setOrdersFilter] = useState('all');
+  const [orderRows, setOrderRows] = useState<GridRowsProp>([]);
+  const today = new Date().toISOString().split('T')[0];
+
+  const [loading, setLoading] = useState(false);
+  const [filters] = useState({
+    orderStatus: null,
+    dateFrom: '2025-01-01',
+    dateTo: today, // Default to today
+    patientName: null,
+    orderBy: null,
+  });
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      // Get token from localStorage or your auth context
+      const token = localStorage.getItem('jwtToken');
+
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(filters),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch orders');
+      }
+
+      const ordersData = await response.json();
+      console.log('Transformed orders:', ordersData);
+      setOrderRows(ordersData);
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+      alert('Failed to fetch orders: ');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
 
   const menuItems = [
     { id: 'home', label: 'Home', icon: Home },
@@ -39,46 +89,6 @@ export default function Dashboard() {
     { id: 'help', label: 'Help', icon: HelpCircle },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'logout', label: 'Log out', icon: LogOut },
-  ];
-
-  // MUI DataGrid data for orders
-  const orderRows: GridRowsProp = [
-    {
-      id: 1,
-      orderid: '123467',
-      status: 'Delivered',
-      medicine: 'Antibiotics 500, MG...',
-      orderdate: '4 Mar, 2023\n1:00 P.M. EST',
-      location: 'Health View Clinic\nGreen St. 32, Larkfield Town...',
-      orderby: 'Dr. Milos I',
-    },
-    {
-      id: 2,
-      orderid: '123468',
-      status: 'Cancelled',
-      medicine: 'Paracetamol 250mg',
-      orderdate: '4 Mar, 2023\n1:00 P.M. EST',
-      location: 'Health View Clinic\nGreen St. 32, Lark',
-      orderby: 'Dr. Smith',
-    },
-    {
-      id: 3,
-      orderid: '123469',
-      status: 'In Progress',
-      medicine: 'Ibuprofen 400mg',
-      orderdate: '5 Mar, 2023\n2:30 P.M. EST',
-      location: 'City Medical Center\nMain St. 15, Downtown',
-      orderby: 'Dr. Johnson',
-    },
-    {
-      id: 4,
-      orderid: '123470',
-      status: 'Dispatched',
-      medicine: 'Aspirin 100mg',
-      orderdate: '5 Mar, 2023\n3:45 P.M. EST',
-      location: 'Community Hospital\nPark Ave. 22, Uptown',
-      orderby: 'Dr. Williams',
-    },
   ];
 
   // Custom cell renderer for Order Date
@@ -244,6 +254,7 @@ export default function Dashboard() {
                   backgroundColor: '#f9fafb',
                 },
               }}
+              loading={loading}
             />
           </div>
         </div>

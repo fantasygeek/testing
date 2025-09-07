@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Header } from '@/components/ui/header';
@@ -11,10 +10,12 @@ import { useRouter } from 'next/navigation';
 export default function LoginPage() {
   const [username, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
       const baseUrl = 'https://cnsclick-api.azurewebsites.net';
@@ -34,8 +35,9 @@ export default function LoginPage() {
       const result = await res.json();
       console.log('Response status:', result);
       if (result.success && result.data) {
-        const { jwtToken, roles } = result.data;
+        const { jwtToken, roles, username } = result.data;
         localStorage.setItem('jwtToken', jwtToken);
+        localStorage.setItem('username', username);
 
         if (roles.includes('DOCTOR')) {
           router.push('/doctor');
@@ -48,6 +50,8 @@ export default function LoginPage() {
     } catch (err) {
       console.error(err);
       alert('Invalid credentials');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -111,12 +115,13 @@ export default function LoginPage() {
 
                 {/* Login button */}
                 <div className="pt-3">
-                  <Button
+                  <button
                     type="submit"
+                    disabled={loading}
                     className="bg-[#0077bb] hover:bg-[#005599] text-white h-12 text-base font-medium rounded-lg w-full"
                   >
-                    Log In
-                  </Button>
+                    {loading ? 'Logging in...' : 'Login'}
+                  </button>
                 </div>
 
                 {/* Create account link */}
