@@ -43,6 +43,10 @@ export default function LoginPage() {
           router.push('/doctor');
         } else if (roles.includes('ADMIN')) {
           router.push('/admin');
+        } else if (roles.includes('HOSPICE')) {
+          router.push('/hospice');
+        } else if (roles.includes('PHARMACIST')) {
+          router.push('/pharmacist');
         }
       } else {
         alert(result.messages?.[0]?.details || 'Login failed');
