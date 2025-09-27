@@ -82,6 +82,7 @@ function transformToMUIFormat(apiData) {
     orderid:
       order.orderId || order.orderNumber || order.id || `ORD${index + 1}`,
     status: order.orderStatusDesc || 'Unknown',
+    patient: order.patientName || order.patient || 'N/A',
     medicine: formatMedicine(order.orderItems || order.items || order.medicine),
     orderdate: formatOrderDate(
       order.orderDate || order.createdAt || order.date
