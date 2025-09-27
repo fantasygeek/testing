@@ -45,7 +45,10 @@ export default function Dashboard() {
   });
 
   // ✅ Updated fetchOrders
-  const fetchOrders = async (searchQuery = '', statusFilter: string | null = null) => {
+  const fetchOrders = async (
+    searchQuery = '',
+    statusFilter: string | null = null
+  ) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('jwtToken');
@@ -172,38 +175,56 @@ export default function Dashboard() {
       headerName: 'Status',
       width: 140,
       sortable: true,
-      renderCell: (params: GridRenderCellParams) => <StatusCell value={params.value} />,
+      renderCell: (params: GridRenderCellParams) => (
+        <StatusCell value={params.value} />
+      ),
     },
     {
       field: 'patient',
       headerName: 'Patient Name',
       width: 140,
       sortable: true,
-      renderCell: (params: GridRenderCellParams) => <StatusCell value={params.value} />,
+      renderCell: (params: GridRenderCellParams) => (
+        <StatusCell value={params.value} />
+      ),
     },
-    { field: 'medicine', headerName: 'Order Medicine', width: 200, sortable: true },
+    {
+      field: 'medicine',
+      headerName: 'Order Medicine',
+      width: 200,
+      sortable: true,
+    },
     {
       field: 'orderdate',
       headerName: 'Order Date',
       width: 150,
       sortable: true,
-      sortComparator: (v1, v2) => new Date(v1.split('\n')[0]).getTime() - new Date(v2.split('\n')[0]).getTime(),
-      renderCell: (params: GridRenderCellParams) => <OrderDateCell value={params.value} />,
+      sortComparator: (v1, v2) =>
+        new Date(v1.split('\n')[0]).getTime() -
+        new Date(v2.split('\n')[0]).getTime(),
+      renderCell: (params: GridRenderCellParams) => (
+        <OrderDateCell value={params.value} />
+      ),
     },
     {
       field: 'location',
       headerName: 'Location',
       width: 220,
       sortable: true,
-      sortComparator: (v1, v2) => v1.split('\n')[0].localeCompare(v2.split('\n')[0]),
-      renderCell: (params: GridRenderCellParams) => <LocationCell value={params.value} />,
+      sortComparator: (v1, v2) =>
+        v1.split('\n')[0].localeCompare(v2.split('\n')[0]),
+      renderCell: (params: GridRenderCellParams) => (
+        <LocationCell value={params.value} />
+      ),
     },
     {
       field: 'orderby',
       headerName: 'Order By',
       width: 180,
       sortable: true,
-      renderCell: (params: GridRenderCellParams) => <OrderByCell value={params.value} />,
+      renderCell: (params: GridRenderCellParams) => (
+        <OrderByCell value={params.value} />
+      ),
     },
   ];
 
@@ -228,7 +249,7 @@ export default function Dashboard() {
               {filterButtons.map((button) => (
                 <button
                   key={button.id}
-                  onClick={() => handleStatusFilter(button.id)}
+                  onClick={() => handleStatusFilter(button.id.toString())}
                   className={`px-4 py-2 font-medium transition-colors hover:text-[#0b9afe] ${
                     button.id === 'all' || ordersFilter === button.id
                       ? 'text-[#0b9afe]'
@@ -264,7 +285,10 @@ export default function Dashboard() {
           </div>
 
           {/* Table */}
-          <div className="bg-white rounded-lg border" style={{ height: 500, width: '100%' }}>
+          <div
+            className="bg-white rounded-lg border"
+            style={{ height: 500, width: '100%' }}
+          >
             <DataGrid
               rows={orderRows}
               columns={orderColumns}
@@ -283,7 +307,9 @@ export default function Dashboard() {
                 },
                 '& .MuiDataGrid-cell': { borderBottom: '1px solid #f3f4f6' },
                 '& .MuiDataGrid-row:hover': { backgroundColor: '#f9fafb' },
-                '& .MuiDataGrid-columnHeader:hover': { backgroundColor: '#f3f4f6' },
+                '& .MuiDataGrid-columnHeader:hover': {
+                  backgroundColor: '#f3f4f6',
+                },
                 '& .MuiDataGrid-sortIcon': { opacity: 1, color: '#0b9afe' },
                 '& .MuiDataGrid-columnHeaderTitle': { fontWeight: 500 },
               }}
@@ -300,7 +326,8 @@ export default function Dashboard() {
           {menuItems.find((item) => item.id === activeTab)?.label}
         </h1>
         <p className="text-gray-600">
-          Content for {menuItems.find((item) => item.id === activeTab)?.label} will be displayed here.
+          Content for {menuItems.find((item) => item.id === activeTab)?.label}{' '}
+          will be displayed here.
         </p>
       </div>
     );
@@ -313,14 +340,34 @@ export default function Dashboard() {
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Image src="/images/cns-logo-1.png" alt="cns-logo-1" width={60} height={40} className="object-contain" />
-            <span className="text-xl font-medium" style={{ color: '#004c7f' }}>Click</span>
+            <Image
+              src="/images/cns-logo-1.png"
+              alt="cns-logo-1"
+              width={60}
+              height={40}
+              className="object-contain"
+            />
+            <span className="text-xl font-medium" style={{ color: '#004c7f' }}>
+              Click
+            </span>
           </div>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
-              <Image src="/images/admin-icon.jpg" alt="admin-icon" width={24} height={24} className="rounded-full" />
+              <Image
+                src="/images/admin-icon.jpg"
+                alt="admin-icon"
+                width={24}
+                height={24}
+                className="rounded-full"
+              />
               <span style={{ color: '#929292' }}>Admin / Super</span>
-              <Image src="/images/icons.png" alt="icons" width={48} height={24} className="object-contain" />
+              <Image
+                src="/images/icons.png"
+                alt="icons"
+                width={48}
+                height={24}
+                className="object-contain"
+              />
             </div>
           </div>
         </div>
@@ -328,7 +375,10 @@ export default function Dashboard() {
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 min-h-screen" style={{ backgroundColor: '#5e5e5e' }}>
+        <aside
+          className="w-64 min-h-screen"
+          style={{ backgroundColor: '#5e5e5e' }}
+        >
           <div className="p-4">
             <Button className="w-full mb-6 bg-transparent border border-gray-400 text-white hover:bg-gray-600">
               <Plus className="w-4 h-4 mr-2" />
