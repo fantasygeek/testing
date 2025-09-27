@@ -249,7 +249,7 @@ export default function Dashboard() {
               {filterButtons.map((button) => (
                 <button
                   key={button.id}
-                  onClick={() => handleStatusFilter(button.id)}
+                  onClick={() => handleStatusFilter(button.id.toString())}
                   className={`px-4 py-2 font-medium transition-colors hover:text-[#0b9afe] ${
                     button.id === 'all' || ordersFilter === button.id
                       ? 'text-[#0b9afe]'
