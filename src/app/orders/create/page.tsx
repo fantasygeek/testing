@@ -38,6 +38,14 @@ interface Address {
 }
 
 export default function NewOrderPage() {
+  // Set orderBy from localStorage username on mount
+  React.useEffect(() => {
+    const username = localStorage.getItem('username') || '';
+    setFormData((prev) => ({
+      ...prev,
+      orderBy: username,
+    }));
+  }, []);
   // Custom Select Component
   type CustomSelectOption = {
     value: string;
@@ -708,13 +716,8 @@ export default function NewOrderPage() {
                 <Input
                   className="h-12"
                   value={formData.orderBy}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      orderBy: e.target.value,
-                    }))
-                  }
-                  placeholder="Enter email"
+                  readOnly
+                  placeholder="Order By"
                 />
               </div>
 
