@@ -38,6 +38,49 @@ export default function Dashboard() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // ✅ Add sidebar collapse state
   const [orderRows, setOrderRows] = useState<GridRowsProp>([]);
   const [searchText, setSearchText] = useState('');
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
+  const [approveRemarks, setApproveRemarks] = useState('');
+  const [approveOrderId, setApproveOrderId] = useState<string | number | null>(
+    null
+  );
+
+  function handleApproveClick(orderId: number | string) {
+    setApproveOrderId(orderId);
+    setApproveDialogOpen(true);
+  }
+
+  async function handleApproveSubmit() {
+    if (!approveOrderId) return;
+    try {
+      const token = localStorage.getItem('jwtToken');
+      const response = await fetch(
+        'https://cnsclick-api.azurewebsites.net/api/order/approval',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            orderId: approveOrderId,
+            remarks: approveRemarks,
+          }),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        alert(errorData.message || 'Failed to approve order');
+        return;
+      }
+      setApproveDialogOpen(false);
+      setApproveRemarks('');
+      setApproveOrderId(null);
+      fetchOrders(); // Optionally refresh orders
+      alert('Order approved successfully');
+    } catch (error) {
+      alert('Failed to approve order. '+error);
+    }
+  }
   const today = new Date().toISOString().split('T')[0];
 
   const [loading, setLoading] = useState(false);
@@ -173,9 +216,9 @@ export default function Dashboard() {
     );
   };
 
-  const OrderByCell = ({ value }: { value: string }) => (
+  const OrderByCell = (params: GridRenderCellParams) => (
     <div className="flex items-center justify-between w-full">
-      <span className="text-gray-900 text-sm">{value}</span>
+      <span className="text-gray-900 text-sm">{params.value}</span>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
@@ -184,15 +227,23 @@ export default function Dashboard() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem>Resend Confirmation</DropdownMenuItem>
-          <DropdownMenuItem>Cancel Order</DropdownMenuItem>
-          <DropdownMenuItem>Modify Order</DropdownMenuItem>
-          <DropdownMenuItem>Approved Order</DropdownMenuItem>
-          <DropdownMenuItem>Track Order</DropdownMenuItem>
+          <DropdownMenuItem>Cancel</DropdownMenuItem>
+          <DropdownMenuItem>Modify</DropdownMenuItem>
+          {typeof params.row.status === 'string' &&
+            params.row.status.replace(/_/g, ' ').toUpperCase() ===
+              'WAITING FOR APPROVAL' &&
+            params.row.approvalRequired === true && (
+              <DropdownMenuItem
+                onClick={() => handleApproveClick(params.row.orderid)}
+              >
+                Approve
+              </DropdownMenuItem>
+            )}
+          <DropdownMenuItem>Track</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
   );
-
   // Columns
   const orderColumns: GridColDef[] = [
     { field: 'orderid', headerName: 'Order ID', width: 120, sortable: true },
@@ -248,9 +299,7 @@ export default function Dashboard() {
       headerName: 'Order By',
       width: 180,
       sortable: true,
-      renderCell: (params: GridRenderCellParams) => (
-        <OrderByCell value={params.value} />
-      ),
+      renderCell: (params: GridRenderCellParams) => <OrderByCell {...params} />,
     },
   ];
 
@@ -298,6 +347,43 @@ export default function Dashboard() {
                 onKeyPress={handleKeyPress}
                 className="pl-10 max-w-md bg-white border-gray-300"
               />
+              {/* Approve Modal Dialog */}
+              {approveDialogOpen && (
+                <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
+                  <div className="bg-white rounded-lg shadow-lg p-6 w-96">
+                    <h2 className="text-lg font-semibold mb-4">
+                      Approve Order
+                    </h2>
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-2">
+                        Remarks
+                      </label>
+                      <textarea
+                        className="w-full border rounded p-2"
+                        rows={3}
+                        value={approveRemarks}
+                        onChange={(e) => setApproveRemarks(e.target.value)}
+                        placeholder="Enter remarks (optional)"
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setApproveDialogOpen(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="default"
+                        onClick={handleApproveSubmit}
+                        style={{ backgroundColor: '#DED1F0', color: '#3a2c4a' }}
+                      >
+                        Approve
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
               {searchText && (
                 <Button
                   onClick={clearSearch}
