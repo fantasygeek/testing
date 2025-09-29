@@ -35,14 +35,16 @@ const AdminHeader: React.FC<HeaderProps> = ({
         {/* Logo - fixed to the left side */}
         {showLogo && (
           <div className="flex-shrink-0">
-            <Image
-              src={logoSrc}
-              alt={logoAlt}
-              width={logoWidth}
-              height={logoHeight}
-              className="object-contain"
-              priority
-            />
+            <link href="/">
+              <Image
+                src={logoSrc}
+                alt={logoAlt}
+                width={logoWidth}
+                height={logoHeight}
+                className="object-contain"
+                priority
+              />
+            </link>
           </div>
         )}
 

@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface HeaderProps {
   title?: string;
@@ -45,6 +46,7 @@ const Header: React.FC<HeaderProps> = ({
         {/* Logo - fixed to the right side */}
         {showLogo && (
           <div className="flex-shrink-0 ml-4">
+            <Link href="/">
             <Image
               src={logoSrc}
               alt={logoAlt}
@@ -53,6 +55,7 @@ const Header: React.FC<HeaderProps> = ({
               className="object-contain"
               priority
             />
+            </Link>
           </div>
         )}
       </div>
