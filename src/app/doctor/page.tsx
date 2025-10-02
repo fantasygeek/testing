@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -32,17 +33,80 @@ import {
 import { StatusCell } from '@/components/ui/status-cell';
 
 export default function Dashboard() {
+  const router = useRouter();
+  const [user, setUser] = useState<{ username: string; roles: string[] } | null>(null);
   const [activeTab, setActiveTab] = useState('orders');
   const [ordersFilter, setOrdersFilter] = useState<number>(-1);
-  const [currentFilter, setCurrentFilter] = useState<number>(-1); // ✅ Add separate state for immediate UI updates
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // ✅ Add sidebar collapse state
+  const [currentFilter, setCurrentFilter] = useState<number>(-1);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [orderRows, setOrderRows] = useState<GridRowsProp>([]);
   const [searchText, setSearchText] = useState('');
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [approveRemarks, setApproveRemarks] = useState('');
-  const [approveOrderId, setApproveOrderId] = useState<string | number | null>(
-    null
-  );
+  const [approveOrderId, setApproveOrderId] = useState<string | number | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const today = new Date().toISOString().split('T')[0];
+  const [filters, setFilters] = useState({
+    orderStatus: null as number | null,
+    dateFrom: '2025-01-01',
+    dateTo: today,
+    patientName: null as string | null,
+    orderBy: null as string | null,
+  });
+
+  // Check authentication on mount
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = () => {
+    if (typeof document === 'undefined') return;
+
+    const cookies = document.cookie.split('; ').reduce((acc, cookie) => {
+      const [key, value] = cookie.split('=');
+      acc[key] = decodeURIComponent(value);
+      return acc;
+    }, {} as Record<string, string>);
+
+    const username = cookies['username'];
+    const rolesStr = cookies['roles'];
+
+    if (!username || !rolesStr) {
+      router.push('/login');
+      return;
+    }
+
+    try {
+      const roles = JSON.parse(rolesStr);
+      
+      if (!roles.includes('DOCTOR')) {
+        router.push('/unauthorized');
+        return;
+      }
+
+      setUser({ username, roles });
+    } catch {
+      router.push('/login');
+    }
+  };
+
+  // Logout handler
+  const handleLogout = async () => {
+    if (confirm('Are you sure you want to logout?')) {
+      try {
+        await fetch('/api/auth/logout', { 
+          method: 'POST',
+          credentials: 'include'
+        });
+        router.push('/login');
+        router.refresh();
+      } catch (error) {
+        console.error('Logout failed:', error);
+        router.push('/login');
+      }
+    }
+  };
 
   function handleApproveClick(orderId: number | string) {
     setApproveOrderId(orderId);
@@ -52,72 +116,56 @@ export default function Dashboard() {
   async function handleApproveSubmit() {
     if (!approveOrderId) return;
     try {
-      const token = localStorage.getItem('jwtToken');
-      const response = await fetch(
-        'https://cnsclick-api.azurewebsites.net/api/order/approval',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            orderId: approveOrderId,
-            remarks: approveRemarks,
-          }),
-        }
-      );
+      const response = await fetch('/api/order/approval', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          orderId: approveOrderId,
+          remarks: approveRemarks,
+        }),
+      });
+
       if (!response.ok) {
         const errorData = await response.json();
         alert(errorData.message || 'Failed to approve order');
         return;
       }
+
       setApproveDialogOpen(false);
       setApproveRemarks('');
       setApproveOrderId(null);
-      fetchOrders(); // Optionally refresh orders
+      fetchOrders();
       alert('Order approved successfully');
     } catch (error) {
-      alert('Failed to approve order. '+error);
+      alert('Failed to approve order. ' + error);
     }
   }
-  const today = new Date().toISOString().split('T')[0];
 
-  const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({
-    orderStatus: null as number | null, // ✅ Initialize with null for "All Orders"
-    dateFrom: '2025-01-01',
-    dateTo: today,
-    patientName: null as string | null,
-    orderBy: null as string | null,
-  });
-
-  // ✅ Fixed fetchOrders - useCallback to stabilize reference for useEffect
   const fetchOrders = useCallback(
     async (searchQuery = '', statusFilter: number | null = null) => {
       setLoading(true);
       try {
-        const token = localStorage.getItem('jwtToken');
-        if (!token) throw new Error('No authentication token found');
-
         const updatedFilters = {
           ...filters,
           patientName: searchQuery.trim() || null,
-          orderStatus: statusFilter, // ✅ Use the parameter directly
+          orderStatus: statusFilter,
         };
 
-        console.log('Sending filters to API:', updatedFilters); // ✅ Add logging
+        console.log('Sending filters to API:', updatedFilters);
 
         const response = await fetch('/api/orders', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(updatedFilters),
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            router.push('/login');
+            return;
+          }
           const errorData = await response.json();
           throw new Error(errorData.message || 'Failed to fetch orders');
         }
@@ -126,46 +174,33 @@ export default function Dashboard() {
         setOrderRows(ordersData);
       } catch (error) {
         console.error('Failed to fetch orders:', error);
-        alert('Failed to fetch orders: ');
+        alert('Failed to fetch orders');
       } finally {
         setLoading(false);
       }
     },
-    [filters]
+    [filters, router]
   );
 
   useEffect(() => {
-    fetchOrders();
-  }, [ordersFilter, fetchOrders]);
+    if (user) {
+      fetchOrders();
+    }
+  }, [ordersFilter, user]);
 
-  // ✅ Fixed handleStatusFilter using separate state for UI
   const handleStatusFilter = (status: number) => {
     console.log('Clicking status:', status);
-
-    // Immediately update the UI state
     setCurrentFilter(status);
-
-    // Convert -1 to null for API call
     const filterValue = status === -1 ? null : status;
     console.log('Sending to API:', filterValue);
-
-    // Update the main state
     setOrdersFilter(status);
     setFilters((prev) => ({
       ...prev,
       orderStatus: filterValue,
     }));
-
-    // Fetch orders after state is updated
     fetchOrders(searchText, filterValue);
   };
 
-  // ✅ Add useEffect to handle re-render after state update
-  useEffect(() => {
-    // This will trigger a re-render whenever ordersFilter changes
-  }, [ordersFilter]);
-
-  // ✅ Fixed handleSearch
   const handleSearch = () => {
     const filterValue = currentFilter === -1 ? null : currentFilter;
     fetchOrders(searchText, filterValue);
@@ -179,7 +214,6 @@ export default function Dashboard() {
     setSearchText(e.target.value);
   };
 
-  // ✅ Fixed clearSearch
   const clearSearch = () => {
     setSearchText('');
     const filterValue = currentFilter === -1 ? null : currentFilter;
@@ -192,10 +226,9 @@ export default function Dashboard() {
     { id: 'chat', label: 'Chat', icon: MessageCircle },
     { id: 'help', label: 'Help', icon: HelpCircle },
     { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'logout', label: 'Log out', icon: LogOut },
+    { id: 'logout', label: 'Log out', icon: LogOut, onClick: handleLogout },
   ];
 
-  // Custom renderers...
   const OrderDateCell = ({ value }: { value: string }) => {
     const [date, time] = value.split('\n');
     return (
@@ -244,7 +277,7 @@ export default function Dashboard() {
       </DropdownMenu>
     </div>
   );
-  // Columns
+
   const orderColumns: GridColDef[] = [
     { field: 'orderid', headerName: 'Order ID', width: 120, sortable: true },
     {
@@ -303,10 +336,8 @@ export default function Dashboard() {
     },
   ];
 
-  // Main content
   const renderContent = () => {
     if (activeTab === 'orders') {
-      // ✅ Fixed filterButtons - use -1 for "All Orders"
       const filterButtons = [
         { id: -1, label: 'All Orders' },
         { id: 1, label: 'CREATED' },
@@ -320,7 +351,6 @@ export default function Dashboard() {
           <div className="mb-6">
             <p className="text-gray-600 mb-4">Track, Create Orders here...</p>
 
-            {/* ✅ Status filter buttons using currentFilter for immediate UI updates */}
             <div className="flex gap-6 mb-6">
               {filterButtons.map((button) => (
                 <button
@@ -337,7 +367,6 @@ export default function Dashboard() {
               ))}
             </div>
 
-            {/* Search */}
             <div className="relative mb-6">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
@@ -347,7 +376,6 @@ export default function Dashboard() {
                 onKeyPress={handleKeyPress}
                 className="pl-10 max-w-md bg-white border-gray-300"
               />
-              {/* Approve Modal Dialog */}
               {approveDialogOpen && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
                   <div className="bg-white rounded-lg shadow-lg p-6 w-96">
@@ -397,7 +425,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Table */}
           <div
             className="bg-white rounded-lg border"
             style={{ height: 500, width: '100%' }}
@@ -452,10 +479,16 @@ export default function Dashboard() {
     );
   };
 
-  // Layout
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -479,7 +512,7 @@ export default function Dashboard() {
                 height={24}
                 className="rounded-full"
               />
-              <span style={{ color: '#929292' }}>Admin / Super</span>
+              <span style={{ color: '#929292' }}>Dr. {user.username}</span>
               <Image
                 src="/images/icons.png"
                 alt="icons"
@@ -493,14 +526,12 @@ export default function Dashboard() {
       </header>
 
       <div className="flex">
-        {/* Sidebar */}
         <aside
           className={`min-h-screen transition-all duration-300 ${
             sidebarCollapsed ? 'w-16' : 'w-64'
           }`}
           style={{ backgroundColor: '#5e5e5e' }}
         >
-          {/* Toggle Button at the top */}
           <div className="flex justify-between items-center p-4 border-b border-gray-600">
             {!sidebarCollapsed && (
               <span className="text-white font-medium">Menu</span>
@@ -519,7 +550,6 @@ export default function Dashboard() {
           </div>
 
           <div className="p-4">
-            {/* New Link */}
             <Link
               href="/orders/create"
               className={`w-full mb-6 flex items-center justify-center bg-transparent border border-gray-400 text-white hover:bg-gray-600 transition-colors ${
@@ -530,14 +560,19 @@ export default function Dashboard() {
               {!sidebarCollapsed && <span className="ml-2">New</span>}
             </Link>
 
-            {/* Navigation Menu */}
             <nav className="space-y-1">
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setActiveTab(item.id)}
+                    onClick={() => {
+                      if (item.onClick) {
+                        item.onClick();
+                      } else {
+                        setActiveTab(item.id);
+                      }
+                    }}
                     className={`w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-gray-600 transition-colors ${
                       activeTab === item.id ? 'bg-gray-600' : ''
                     } ${sidebarCollapsed ? 'justify-center px-2' : ''}`}
@@ -552,7 +587,6 @@ export default function Dashboard() {
           </div>
         </aside>
 
-        {/* Main */}
         <main className="flex-1 bg-white">{renderContent()}</main>
       </div>
     </div>
