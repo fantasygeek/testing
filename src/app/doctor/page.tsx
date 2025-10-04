@@ -3,8 +3,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { Input } from '@/components/ui/input';
+import { SidebarMenu, SidebarMenuItem } from '@/components/ui/SidebarMenu';
+import { useAuth } from '@/hooks/useAuth';
+import Link from 'next/link';
 import {
   Home,
   ShoppingCart,
@@ -12,9 +14,6 @@ import {
   HelpCircle,
   Settings,
   LogOut,
-  Plus,
-  Menu,
-  ChevronLeft,
 } from 'lucide-react';
 import Image from 'next/image';
 import { MoreHorizontal, Search } from 'lucide-react';
@@ -34,7 +33,7 @@ import { StatusCell } from '@/components/ui/status-cell';
 
 export default function Dashboard() {
   const router = useRouter();
-  const [user, setUser] = useState<{ username: string; roles: string[] } | null>(null);
+  const { user, loading: authLoading, logout } = useAuth('DOCTOR');
   const [activeTab, setActiveTab] = useState('orders');
   const [ordersFilter, setOrdersFilter] = useState<number>(-1);
   const [currentFilter, setCurrentFilter] = useState<number>(-1);
@@ -43,7 +42,10 @@ export default function Dashboard() {
   const [searchText, setSearchText] = useState('');
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [approveRemarks, setApproveRemarks] = useState('');
-  const [approveOrderId, setApproveOrderId] = useState<string | number | null>(null);
+  const [approveOrderId, setApproveOrderId] = useState<string | number | null>(
+    null
+  );
+
   const [loading, setLoading] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
@@ -55,59 +57,6 @@ export default function Dashboard() {
     orderBy: null as string | null,
   });
 
-  // Check authentication on mount
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = () => {
-    if (typeof document === 'undefined') return;
-
-    const cookies = document.cookie.split('; ').reduce((acc, cookie) => {
-      const [key, value] = cookie.split('=');
-      acc[key] = decodeURIComponent(value);
-      return acc;
-    }, {} as Record<string, string>);
-
-    const username = cookies['username'];
-    const rolesStr = cookies['roles'];
-
-    if (!username || !rolesStr) {
-      router.push('/login');
-      return;
-    }
-
-    try {
-      const roles = JSON.parse(rolesStr);
-      
-      if (!roles.includes('DOCTOR')) {
-        router.push('/unauthorized');
-        return;
-      }
-
-      setUser({ username, roles });
-    } catch {
-      router.push('/login');
-    }
-  };
-
-  // Logout handler
-  const handleLogout = async () => {
-    if (confirm('Are you sure you want to logout?')) {
-      try {
-        await fetch('/api/auth/logout', { 
-          method: 'POST',
-          credentials: 'include'
-        });
-        router.push('/login');
-        router.refresh();
-      } catch (error) {
-        console.error('Logout failed:', error);
-        router.push('/login');
-      }
-    }
-  };
-
   function handleApproveClick(orderId: number | string) {
     setApproveOrderId(orderId);
     setApproveDialogOpen(true);
@@ -116,7 +65,7 @@ export default function Dashboard() {
   async function handleApproveSubmit() {
     if (!approveOrderId) return;
     try {
-      const response = await fetch('/api/order/approval', {
+      const response = await fetch('/api/orders/approval', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -168,6 +117,10 @@ export default function Dashboard() {
           }
           const errorData = await response.json();
           throw new Error(errorData.message || 'Failed to fetch orders');
+        } else if (response.status === 401) {
+          router.push('/login');
+          console.log('Redirecting to login due to 401 response');
+          return;
         }
 
         const ordersData = await response.json();
@@ -186,7 +139,7 @@ export default function Dashboard() {
     if (user) {
       fetchOrders();
     }
-  }, [ordersFilter, user]);
+  }, [ordersFilter, user, fetchOrders]);
 
   const handleStatusFilter = (status: number) => {
     console.log('Clicking status:', status);
@@ -220,13 +173,13 @@ export default function Dashboard() {
     fetchOrders('', filterValue);
   };
 
-  const menuItems = [
+  const menuItems: SidebarMenuItem[] = [
     { id: 'home', label: 'Home', icon: Home },
     { id: 'orders', label: 'Orders', icon: ShoppingCart },
     { id: 'chat', label: 'Chat', icon: MessageCircle },
     { id: 'help', label: 'Help', icon: HelpCircle },
     { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'logout', label: 'Log out', icon: LogOut, onClick: handleLogout },
+    { id: 'logout', label: 'Log out', icon: LogOut, onClick: logout },
   ];
 
   const OrderDateCell = ({ value }: { value: string }) => {
@@ -261,7 +214,16 @@ export default function Dashboard() {
         <DropdownMenuContent align="end">
           <DropdownMenuItem>Resend Confirmation</DropdownMenuItem>
           <DropdownMenuItem>Cancel</DropdownMenuItem>
-          <DropdownMenuItem>Modify</DropdownMenuItem>
+          {typeof params.row.status === 'string' &&
+            params.row.status.replace(/_/g, ' ').toUpperCase() ===
+              'WAITING FOR APPROVAL' && (
+              <DropdownMenuItem
+                
+              >
+                <Link href={`/orders/update/${params.row.orderid}`}>Modify</Link>
+                
+              </DropdownMenuItem>
+            )}
           {typeof params.row.status === 'string' &&
             params.row.status.replace(/_/g, ' ').toUpperCase() ===
               'WAITING FOR APPROVAL' &&
@@ -526,66 +488,13 @@ export default function Dashboard() {
       </header>
 
       <div className="flex">
-        <aside
-          className={`min-h-screen transition-all duration-300 ${
-            sidebarCollapsed ? 'w-16' : 'w-64'
-          }`}
-          style={{ backgroundColor: '#5e5e5e' }}
-        >
-          <div className="flex justify-between items-center p-4 border-b border-gray-600">
-            {!sidebarCollapsed && (
-              <span className="text-white font-medium">Menu</span>
-            )}
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="text-white hover:bg-gray-600 p-2 rounded transition-colors"
-              title={sidebarCollapsed ? 'Expand Menu' : 'Collapse Menu'}
-            >
-              {sidebarCollapsed ? (
-                <Menu className="w-5 h-5" />
-              ) : (
-                <ChevronLeft className="w-5 h-5" />
-              )}
-            </button>
-          </div>
-
-          <div className="p-4">
-            <Link
-              href="/orders/create"
-              className={`w-full mb-6 flex items-center justify-center bg-transparent border border-gray-400 text-white hover:bg-gray-600 transition-colors ${
-                sidebarCollapsed ? 'px-2' : 'px-4 py-2'
-              } rounded-md`}
-            >
-              <Plus className="w-4 h-4" />
-              {!sidebarCollapsed && <span className="ml-2">New</span>}
-            </Link>
-
-            <nav className="space-y-1">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      if (item.onClick) {
-                        item.onClick();
-                      } else {
-                        setActiveTab(item.id);
-                      }
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-gray-600 transition-colors ${
-                      activeTab === item.id ? 'bg-gray-600' : ''
-                    } ${sidebarCollapsed ? 'justify-center px-2' : ''}`}
-                    title={sidebarCollapsed ? item.label : undefined}
-                  >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
-                    {!sidebarCollapsed && <span>{item.label}</span>}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        </aside>
+        <SidebarMenu
+          items={menuItems}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          collapsed={sidebarCollapsed}
+          setCollapsed={setSidebarCollapsed}
+        />
 
         <main className="flex-1 bg-white">{renderContent()}</main>
       </div>

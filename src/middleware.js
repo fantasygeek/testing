@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
 export function middleware(request) {
   const token = request.cookies.get('jwtToken')?.value;
@@ -10,7 +10,7 @@ export function middleware(request) {
     if (token && rolesStr) {
       try {
         const roles = JSON.parse(rolesStr);
-        
+
         // Redirect to appropriate dashboard based on role
         if (roles.includes('DOCTOR')) {
           return NextResponse.redirect(new URL('/doctor', request.url));
@@ -25,14 +25,22 @@ export function middleware(request) {
         return NextResponse.redirect(new URL('/login', request.url));
       }
     }
-    
+
     // Not logged in, redirect to login
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // Protect dashboard routes
-  const protectedPaths = ['/doctor', '/admin', '/hospice', '/pharmacist', '/dashboard'];
-  const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
+  const protectedPaths = [
+    '/doctor',
+    '/admin',
+    '/hospice',
+    '/pharmacist',
+    '/dashboard',
+  ];
+  const isProtectedPath = protectedPaths.some((path) =>
+    pathname.startsWith(path)
+  );
 
   if (isProtectedPath && !token) {
     return NextResponse.redirect(new URL('/login', request.url));
@@ -48,6 +56,6 @@ export const config = {
     '/admin/:path*',
     '/hospice/:path*',
     '/pharmacist/:path*',
-    '/dashboard/:path*'
-  ]
+    '/dashboard/:path*',
+  ],
 };

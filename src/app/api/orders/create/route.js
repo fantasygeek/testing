@@ -11,7 +11,7 @@ export async function POST(request) {
     const body = await request.json();
 
     const response = await fetch(
-      'https://cnsclick-api.azurewebsites.net/api/order/approval',
+      'https://cnsclick-api.azurewebsites.net/api/order/creation',
       {
         method: 'POST',
         headers: {
@@ -25,7 +25,7 @@ export async function POST(request) {
     if (!response.ok) {
       const errorData = await response.json();
       return NextResponse.json(
-        { message: errorData.message || 'Failed to approve order' },
+        { message: errorData.message || 'Failed to create order' },
         { status: response.status }
       );
     }
