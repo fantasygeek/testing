@@ -33,22 +33,39 @@ export default function LoginPage() {
         throw new Error(result.error || 'Login failed');
       }
 
-      // Redirect based on roles
-      const { roles } = result.user;
+      if (result.success) {
+        console.log('✅ Login successful, cookies should be set');
 
-      if (roles.includes('DOCTOR')) {
-        router.push('/doctor');
-      } else if (roles.includes('ADMIN')) {
-        router.push('/admin');
-      } else if (roles.includes('HOSPICE')) {
-        router.push('/hospice');
-      } else if (roles.includes('PHARMACIST')) {
-        router.push('/pharmacist');
+        // Give browser a moment to set cookies
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        // Verify cookies were set
+        const cookiesSet = document.cookie.includes('username');
+
+        if (cookiesSet) {
+          // Redirect based on roles
+          const { roles } = result.user;
+
+          if (roles.includes('DOCTOR')) {
+            router.push('/doctor');
+          } else if (roles.includes('ADMIN')) {
+            router.push('/admin');
+          } else if (roles.includes('HOSPICE')) {
+            router.push('/hospice');
+          } else if (roles.includes('PHARMACIST')) {
+            router.push('/pharmacist');
+          } else {
+            router.push('/dashboard');
+          }
+
+          router.refresh();
+        } else {
+          console.error('❌ Cookies not found after login');
+          setError('Session setup failed. Please try again.');
+        }
       } else {
-        router.push('/dashboard');
+        setError('Login failed');
       }
-      
-      router.refresh();
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : 'Invalid credentials');
@@ -60,12 +77,12 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-white">
       <Header title="CNS Click" leftTitle="" />
-      
+
       <div className="flex items-center justify-center font-medium py-8 px-10 mx-0">
         <div className="w-full max-w-lg">
           <div className="bg-[#eaeaea] p-8 shadow-sm py-5 px-24">
             <h2 className="text-2xl font-bold text-black mb-6">Login</h2>
-            
+
             {error && (
               <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm">
                 {error}

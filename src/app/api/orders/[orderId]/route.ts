@@ -2,16 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { orderId: string } }
+  context: { params: Promise<{ orderId: string }> }
 ) {
   try {
     const token = request.cookies.get('jwtToken')?.value;
-
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const apiUrl = `https://cnsclick-api.azurewebsites.net/api/order/get/${params.orderId}`;
+    const { orderId } = await context.params;
+
+    const apiUrl = `https://cnsclick-api.azurewebsites.net/api/order/get/${orderId}`;
     const response = await fetch(apiUrl, {
       method: 'GET',
       headers: {
@@ -31,7 +32,7 @@ export async function GET(
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Get order error:', error);
+    console.error('❌ Get order error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

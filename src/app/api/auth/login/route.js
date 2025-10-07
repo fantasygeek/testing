@@ -1,5 +1,5 @@
-'use-client';
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 export async function POST(request) {
   try {
@@ -33,9 +33,9 @@ export async function POST(request) {
     // Check if login was successful
     if (!result.success || !result.data) {
       return NextResponse.json(
-        { 
+        {
           error: result.messages?.[0]?.details || 'Login failed',
-          success: false 
+          success: false,
         },
         { status: 401 }
       );
@@ -43,48 +43,82 @@ export async function POST(request) {
 
     const { jwtToken, roles, username: userName } = result.data;
 
-    // Create response with user data (without token)
+    // Method 1: Use cookies() from next/headers (await in Next.js 15+)
+    const cookieStore = await cookies();
+
+    cookieStore.set('jwtToken', jwtToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/',
+    });
+
+    cookieStore.set('username', userName, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    });
+
+    cookieStore.set('roles', JSON.stringify(roles), {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+    });
+
+    console.log('✅ Cookies set successfully:', {
+      jwtToken: '***',
+      username: userName,
+      roles: roles,
+    });
+
+    // Create response
     const response = NextResponse.json(
       {
         success: true,
         user: {
           username: userName,
-          roles: roles
-        }
+          roles: roles,
+        },
       },
       { status: 200 }
     );
 
-    // Set httpOnly cookie with JWT token
+    // Method 2: ALSO set cookies on response (BELT AND SUSPENDERS)
     response.cookies.set('jwtToken', jwtToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/'
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
     });
 
-    // Set username in a separate cookie (not httpOnly so client can read it)
     response.cookies.set('username', userName, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/'
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
     });
 
-    // Set roles in a separate cookie (not httpOnly so client can read it)
     response.cookies.set('roles', JSON.stringify(roles), {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-      path: '/'
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
     });
+
+    // Add explicit headers for debugging
+    response.headers.set('X-Cookies-Set', 'true');
 
     return response;
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('❌ Login error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

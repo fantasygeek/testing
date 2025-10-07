@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { X, Plus, Search, Trash2, ArrowLeft, ChevronDown } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Doctor {
   id: number;
@@ -24,7 +25,8 @@ interface Medicine {
 
 interface OrderItem {
   drugId: number;
-  drugName: string;
+  drugName?: string;
+  name?: string;
   quantity: number;
 }
 
@@ -41,13 +43,10 @@ export default function UpdateOrderPage() {
   const router = useRouter();
   const params = useParams();
   const [orderId, setOrderId] = useState<number | null>(null);
-
+  const { authenticatedFetch } = useAuth(['DOCTOR', 'NURSE']);
   useEffect(() => {
-    // Try to get from URL path first (e.g., /update-order/123)
     const pathParts = window.location.pathname.split('/');
     const idFromPath = pathParts[pathParts.length - 1];
-
-    // If not in path, try query params (e.g., ?orderId=123)
     const params = new URLSearchParams(window.location.search);
     const idFromQuery = params.get('orderId') || params.get('id');
 
@@ -184,62 +183,67 @@ export default function UpdateOrderPage() {
   const [loadingPatients, setLoadingPatients] = useState(false);
 
   // Fetch order data
-  const fetchOrderData = async () => {
-    if (!orderId) return;
+  useEffect(() => {
+    const fetchOrderData = async () => {
+      if (!orderId) return;
 
-    try {
-      const response = await fetch(`/api/orders/${orderId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch order');
+      try {
+        const response = await authenticatedFetch(`/api/orders/${orderId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch order');
+        }
+
+        const result = await response.json();
+        if (result.success && result.data) {
+          const order = result.data;
+
+          // Populate form data
+          setFormData({
+            orderId: order.id?.toString() || '',
+            pharmacyId: order.pharmacyId || 2,
+            pharmacyName: order.pharmacyName || 'CNS Store (Branch 1)',
+            doctorId: order.doctorId?.toString() || '',
+            doctorName: order.doctorName || '',
+            patientId: order.patientId?.toString() || '',
+            patientName: order.patientName || '',
+            orderBy: order.orderBy || '',
+            orderDate: order.orderDate
+              ? new Date(order.orderDate).toISOString().split('T')[0]
+              : new Date().toISOString().split('T')[0],
+            hospiceAdmitted: order.hospiceAdmitted || '',
+            remarks: order.remarks || '',
+            landmark: order.Landmark || order.landmark || '',
+          });
+
+          // Populate addresses
+          if (order.address) {
+            setAddress(order.address);
+          }
+          if (order.deliveryAddress) {
+            setDeliveryAddress(order.deliveryAddress);
+          }
+
+          // Populate order items
+          if (order.orderItems && Array.isArray(order.orderItems)) {
+            setOrderItems(
+              order.orderItems.map((item: OrderItem) => ({
+                drugId: item.drugId,
+                drugName: item.drugName || item.name || 'Unknown Medicine',
+                quantity: item.quantity || 1,
+              }))
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch order:', error);
+        alert('Failed to load order data. Please try again.');
+      } finally {
+        setInitialLoading(false);
       }
-      const result = await response.json();
-      if (result.success && result.data) {
-        const order = result.data;
+    };
 
-        // Populate form data
-        setFormData({
-          orderId: order.id?.toString() || '',
-          pharmacyId: order.pharmacyId || 2,
-          pharmacyName: order.pharmacyName || 'CNS Store (Branch 1)',
-          doctorId: order.doctorId?.toString() || '',
-          doctorName: order.doctorName || '',
-          patientId: order.patientId?.toString() || '',
-          patientName: order.patientName || '',
-          orderBy: order.orderBy || '',
-          orderDate: order.orderDate
-            ? new Date(order.orderDate).toISOString().split('T')[0]
-            : new Date().toISOString().split('T')[0],
-          hospiceAdmitted: order.hospiceAdmitted || '',
-          remarks: order.remarks || '',
-          landmark: order.Landmark || order.landmark || '',
-        });
-
-        // Populate addresses
-        if (order.address) {
-          setAddress(order.address);
-        }
-        if (order.deliveryAddress) {
-          setDeliveryAddress(order.deliveryAddress);
-        }
-
-        // Populate order items
-        if (order.orderItems && Array.isArray(order.orderItems)) {
-          setOrderItems(
-            order.orderItems.map((item: any) => ({
-              drugId: item.drugId,
-              drugName: item.drugName || item.name || 'Unknown Medicine',
-              quantity: item.quantity || 1,
-            }))
-          );
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch order:', error);
-      alert('Failed to load order data. Please try again.');
-    } finally {
-      setInitialLoading(false);
-    }
-  };
+    fetchOrderData();
+  }, [orderId, authenticatedFetch]);
 
   // API types
   type ApiMedicine = {
@@ -288,7 +292,7 @@ export default function UpdateOrderPage() {
   const fetchDoctors = React.useCallback(async () => {
     setLoadingDoctors(true);
     try {
-      const response = await fetch('/api/data/doctors');
+      const response = await authenticatedFetch('/api/data/doctors');
       if (!response.ok) throw new Error('Failed to fetch doctors');
       const result = await response.json();
       if (result.success && result.data) {
@@ -305,7 +309,7 @@ export default function UpdateOrderPage() {
     } finally {
       setLoadingDoctors(false);
     }
-  }, []);
+  }, [authenticatedFetch]);
 
   // Fetch patients
   const fetchPatients = React.useCallback(async () => {
@@ -334,7 +338,6 @@ export default function UpdateOrderPage() {
     fetchDoctors();
     fetchPatients();
     fetchMedicines();
-    fetchOrderData();
   }, [fetchDoctors, fetchPatients, fetchMedicines, orderId]);
 
   // Handle same as address
@@ -514,37 +517,39 @@ export default function UpdateOrderPage() {
 
     try {
       const orderData = {
-      orderId: orderId,
-      pharmacyId: formData.pharmacyId || null,
-      doctorId: formData.doctorId ? parseInt(formData.doctorId) : null,
-      doctorName: formData.doctorName || null,
-      patientId: formData.patientId ? parseInt(formData.patientId) : null,
-      patientName: formData.patientName || null,
-      address: {
-        addressLine1: address.addressLine1 || null,
-        addressLine2: address.addressLine2 || null,
-        city: address.city || null,
-        state: address.state || null,
-        zipCode: address.zipCode || null,
-        country: address.country || null,
-      },
-      deliveryAddress: {
-        addressLine1: deliveryAddress.addressLine1 || null,
-        addressLine2: deliveryAddress.addressLine2 || null,
-        city: deliveryAddress.city || null,
-        state: deliveryAddress.state || null,
-        zipCode: deliveryAddress.zipCode || null,
-        country: deliveryAddress.country || null,
-      },
-      Landmark: formData.landmark || null,
-      orderDate: formData.orderDate ? new Date(formData.orderDate).toISOString() : null,
-      hospiceAdmitted: formData.hospiceAdmitted || null,
-      remarks: formData.remarks || null,
-      orderItems: orderItems.map((item) => ({
-        drugId: item.drugId,
-        quantity: item.quantity,
-      })),
-    };
+        orderId: orderId,
+        pharmacyId: formData.pharmacyId || null,
+        doctorId: formData.doctorId ? parseInt(formData.doctorId) : null,
+        doctorName: formData.doctorName || null,
+        patientId: formData.patientId ? parseInt(formData.patientId) : null,
+        patientName: formData.patientName || null,
+        address: {
+          addressLine1: address.addressLine1 || null,
+          addressLine2: address.addressLine2 || null,
+          city: address.city || null,
+          state: address.state || null,
+          zipCode: address.zipCode || null,
+          country: address.country || null,
+        },
+        deliveryAddress: {
+          addressLine1: deliveryAddress.addressLine1 || null,
+          addressLine2: deliveryAddress.addressLine2 || null,
+          city: deliveryAddress.city || null,
+          state: deliveryAddress.state || null,
+          zipCode: deliveryAddress.zipCode || null,
+          country: deliveryAddress.country || null,
+        },
+        Landmark: formData.landmark || null,
+        orderDate: formData.orderDate
+          ? new Date(formData.orderDate).toISOString()
+          : null,
+        hospiceAdmitted: formData.hospiceAdmitted || null,
+        remarks: formData.remarks || null,
+        orderItems: orderItems.map((item) => ({
+          drugId: item.drugId,
+          quantity: item.quantity,
+        })),
+      };
 
       const response = await fetch(`/api/orders/update/`, {
         method: 'POST',

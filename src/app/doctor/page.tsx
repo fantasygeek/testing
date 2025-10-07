@@ -33,7 +33,7 @@ import { StatusCell } from '@/components/ui/status-cell';
 
 export default function Dashboard() {
   const router = useRouter();
-  const { user, loading: authLoading, logout } = useAuth('DOCTOR');
+  const { user, logout, authenticatedFetch } = useAuth(['DOCTOR']);
   const [activeTab, setActiveTab] = useState('orders');
   const [ordersFilter, setOrdersFilter] = useState<number>(-1);
   const [currentFilter, setCurrentFilter] = useState<number>(-1);
@@ -103,7 +103,7 @@ export default function Dashboard() {
 
         console.log('Sending filters to API:', updatedFilters);
 
-        const response = await fetch('/api/orders', {
+        const response = await authenticatedFetch('/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -132,7 +132,7 @@ export default function Dashboard() {
         setLoading(false);
       }
     },
-    [filters, router]
+    [filters, router, authenticatedFetch]
   );
 
   useEffect(() => {

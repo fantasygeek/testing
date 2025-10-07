@@ -1,4 +1,3 @@
-// Dynamic order view page using orderId from URL
 'use client';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -20,13 +19,7 @@ interface OrderItem {
 }
 
 export default function NewOrderPage() {
-  const { user, loading, logout } = useAuth([
-    'DOCTOR',
-    'NURSE',
-    'ADMIN',
-    'PHARMACIST',
-    'HOSPICE',
-  ]);
+  const {} = useAuth(['DOCTOR', 'NURSE', 'ADMIN', 'PHARMACIST', 'HOSPICE']);
   const [address, setAddress] = React.useState({
     addressLine1: '',
     addressLine2: '',

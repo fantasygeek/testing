@@ -40,7 +40,7 @@ interface Address {
 }
 
 export default function NewOrderPage() {
-  const { loading } = useAuth(['DOCTOR', 'NURSE']);
+  const { authenticatedFetch } = useAuth(['DOCTOR', 'NURSE']);
   React.useEffect(() => {
     const username = getCookie('username') || '';
     const decodedUserName = decodeURIComponent(username);
@@ -56,6 +56,7 @@ export default function NewOrderPage() {
     label: string;
     description?: string;
   };
+  const [loading, setLoading] = useState(false);
 
   interface CustomSelectProps {
     value: string;
@@ -177,7 +178,7 @@ export default function NewOrderPage() {
   const fetchMedicines = React.useCallback(async () => {
     setLoadingMedicines(true);
     try {
-      const response = await fetch('/api/data/medicines');
+      const response = await authenticatedFetch('/api/data/medicines');
       if (!response.ok) {
         throw new Error('Failed to fetch medicines');
       }
@@ -199,7 +200,7 @@ export default function NewOrderPage() {
     } finally {
       setLoadingMedicines(false);
     }
-  }, []);
+  }, [authenticatedFetch]);
 
   const [sameAsAddress, setSameAsAddress] = useState(false);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
@@ -216,7 +217,7 @@ export default function NewOrderPage() {
   const fetchDoctors = React.useCallback(async () => {
     setLoadingDoctors(true);
     try {
-      const response = await fetch('/api/data/doctors');
+      const response = await authenticatedFetch('/api/data/doctors');
       if (!response.ok) {
         throw new Error('Failed to fetch doctors');
       }
@@ -242,7 +243,7 @@ export default function NewOrderPage() {
     } finally {
       setLoadingDoctors(false);
     }
-  }, []);
+  }, [authenticatedFetch]);
 
   // API patient type for mapping
   type ApiPatient = {
@@ -254,7 +255,7 @@ export default function NewOrderPage() {
   const fetchPatients = React.useCallback(async () => {
     setLoadingPatients(true);
     try {
-      const response = await fetch('/api/data/patients');
+      const response = await authenticatedFetch('/api/data/patients');
       if (!response.ok) {
         throw new Error('Failed to fetch patients');
       }
@@ -278,7 +279,7 @@ export default function NewOrderPage() {
     } finally {
       setLoadingPatients(false);
     }
-  }, []);
+  }, [authenticatedFetch]);
 
   // Load doctors, patients, and medicines on component mount
   useEffect(() => {

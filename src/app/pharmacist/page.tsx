@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SidebarMenu, SidebarMenuItem } from '@/components/ui/SidebarMenu';
-
+import { useAuth } from '@/hooks/useAuth';
+import Link from 'next/link';
 import {
   Home,
   ShoppingCart,
@@ -32,10 +33,7 @@ import { StatusCell } from '@/components/ui/status-cell';
 
 export default function Dashboard() {
   const router = useRouter();
-  const [user, setUser] = useState<{
-    username: string;
-    roles: string[];
-  } | null>(null);
+  const { user, logout, authenticatedFetch } = useAuth(['DOCTOR']);
   const [activeTab, setActiveTab] = useState('orders');
   const [ordersFilter, setOrdersFilter] = useState<number>(-1);
   const [currentFilter, setCurrentFilter] = useState<number>(-1);
@@ -47,6 +45,7 @@ export default function Dashboard() {
   const [approveOrderId, setApproveOrderId] = useState<string | number | null>(
     null
   );
+
   const [loading, setLoading] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
@@ -57,59 +56,6 @@ export default function Dashboard() {
     patientName: null as string | null,
     orderBy: null as string | null,
   });
-
-  const checkAuth = useCallback(() => {
-    if (typeof document === 'undefined') return;
-
-    const cookies = document.cookie.split('; ').reduce((acc, cookie) => {
-      const [key, value] = cookie.split('=');
-      acc[key] = decodeURIComponent(value);
-      return acc;
-    }, {} as Record<string, string>);
-
-    const username = cookies['username'];
-    const rolesStr = cookies['roles'];
-
-    if (!username || !rolesStr) {
-      router.push('/login');
-      return;
-    }
-
-    try {
-      const roles = JSON.parse(rolesStr);
-
-      if (!roles.includes('DOCTOR')) {
-        router.push('/unauthorized');
-        return;
-      }
-
-      setUser({ username, roles });
-    } catch {
-      router.push('/login');
-    }
-  }, [router]);
-
-  // Check authentication on mount
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
-
-  // Logout handler
-  const handleLogout = async () => {
-    if (confirm('Are you sure you want to logout?')) {
-      try {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
-          credentials: 'include',
-        });
-        router.push('/login');
-        router.refresh();
-      } catch (error) {
-        console.error('Logout failed:', error);
-        router.push('/login');
-      }
-    }
-  };
 
   function handleApproveClick(orderId: number | string) {
     setApproveOrderId(orderId);
@@ -157,7 +103,7 @@ export default function Dashboard() {
 
         console.log('Sending filters to API:', updatedFilters);
 
-        const response = await fetch('/api/orders', {
+        const response = await authenticatedFetch('/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -171,6 +117,10 @@ export default function Dashboard() {
           }
           const errorData = await response.json();
           throw new Error(errorData.message || 'Failed to fetch orders');
+        } else if (response.status === 401) {
+          router.push('/login');
+          console.log('Redirecting to login due to 401 response');
+          return;
         }
 
         const ordersData = await response.json();
@@ -182,7 +132,7 @@ export default function Dashboard() {
         setLoading(false);
       }
     },
-    [filters, router]
+    [filters, router, authenticatedFetch]
   );
 
   useEffect(() => {
@@ -229,7 +179,7 @@ export default function Dashboard() {
     { id: 'chat', label: 'Chat', icon: MessageCircle },
     { id: 'help', label: 'Help', icon: HelpCircle },
     { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'logout', label: 'Log out', icon: LogOut, onClick: handleLogout },
+    { id: 'logout', label: 'Log out', icon: LogOut, onClick: logout },
   ];
 
   const OrderDateCell = ({ value }: { value: string }) => {
@@ -264,7 +214,15 @@ export default function Dashboard() {
         <DropdownMenuContent align="end">
           <DropdownMenuItem>Resend Confirmation</DropdownMenuItem>
           <DropdownMenuItem>Cancel</DropdownMenuItem>
-          <DropdownMenuItem>Modify</DropdownMenuItem>
+          {typeof params.row.status === 'string' &&
+            params.row.status.replace(/_/g, ' ').toUpperCase() ===
+              'WAITING FOR APPROVAL' && (
+              <DropdownMenuItem>
+                <Link href={`/orders/update/${params.row.orderid}`}>
+                  Modify
+                </Link>
+              </DropdownMenuItem>
+            )}
           {typeof params.row.status === 'string' &&
             params.row.status.replace(/_/g, ' ').toUpperCase() ===
               'WAITING FOR APPROVAL' &&
