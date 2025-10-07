@@ -1,36 +1,39 @@
+import { NextResponse } from 'next/server';
+
 export async function POST(request) {
   try {
-    const body = await request.json();
+    // ✅ Get JWT token from httpOnly cookie instead of Authorization header
+    const token = request.cookies.get('jwtToken')?.value;
 
-    // Set dateTo to today if not provided
-    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-    if (!body.dateTo) {
-      body.dateTo = today;
-    }
-
-    console.log('Get orders request:', body);
-
-    // Get the Authorization header from the incoming request
-    const authHeader = request.headers.get('Authorization');
-    console.log('Authorization header:', authHeader);
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return Response.json(
+    if (!token) {
+      return NextResponse.json(
         {
-          error: 'Missing or invalid Authorization header',
-          message: 'Please provide a valid Bearer token',
+          error: 'Missing or invalid token',
+          message: 'Please login to continue',
         },
         { status: 401 }
       );
     }
 
+    const body = await request.json();
+
+    // Set dateTo to today if not provided
+    const today = new Date().toISOString().split('T')[0];
+    if (!body.dateTo) {
+      body.dateTo = today;
+    }
+
+    console.log('Get orders request:', body);
+    console.log('Using token from cookie');
+
+    // Call external API with token from cookie
     const response = await fetch(
       'https://cnsclick-api.azurewebsites.net/api/order/gets',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: authHeader, // Pass through the Bearer token
+          Authorization: `Bearer ${token}`, // Use token from cookie
         },
         body: JSON.stringify(body),
       }
@@ -41,7 +44,7 @@ export async function POST(request) {
     if (!response.ok) {
       const errorData = await response.text();
       console.error('External API error:', errorData);
-      return Response.json(
+      return NextResponse.json(
         {
           error: 'External API error',
           status: response.status,
@@ -57,10 +60,10 @@ export async function POST(request) {
     // Transform the data to MUI DataGrid format
     const transformedData = transformToMUIFormat(data);
 
-    return Response.json(transformedData, { status: response.status });
+    return NextResponse.json(transformedData, { status: 200 });
   } catch (error) {
     console.error('Orders proxy error:', error);
-    return Response.json(
+    return NextResponse.json(
       {
         error: 'Internal server error',
         message: error.message,
@@ -72,13 +75,12 @@ export async function POST(request) {
 
 // Helper function to transform API response to MUI DataGrid format
 function transformToMUIFormat(apiData) {
-  // Handle both array and object responses
   const orders = Array.isArray(apiData)
     ? apiData
     : apiData.orders || apiData.data || [];
 
   return orders.map((order, index) => ({
-    id: order.id || index + 1, // Use order.id or fallback to index
+    id: order.id || index + 1,
     orderid:
       order.orderId || order.orderNumber || order.id || `ORD${index + 1}`,
     status: order.orderStatusDesc || 'Unknown',
@@ -94,27 +96,24 @@ function transformToMUIFormat(apiData) {
       order.physician ||
       order.prescriber ||
       'N/A',
+    approvalRequired: order.approvalRequired || false, // ✅ Add this field
   }));
 }
 
 function formatMedicine(orderItems) {
   if (!orderItems) return 'N/A';
 
-  // If it's already a string, return as is
   if (typeof orderItems === 'string') {
     return orderItems;
   }
 
-  // If it's an array of order items
   if (Array.isArray(orderItems)) {
     const medicines = orderItems.map((item) => {
       return item.name || item.drugName || item.medicine || 'Unknown Medicine';
     });
 
-    // Join multiple medicines, truncate if too long
     const medicineText = medicines.join(', ');
 
-    // Limit length for display (you can adjust this)
     if (medicineText.length > 150) {
       return medicineText.substring(0, 147) + '...';
     }
@@ -125,7 +124,6 @@ function formatMedicine(orderItems) {
   return 'N/A';
 }
 
-// Helper function to format date
 function formatOrderDate(dateString) {
   if (!dateString) return 'N/A';
 
@@ -150,7 +148,6 @@ function formatOrderDate(dateString) {
   }
 }
 
-// Helper function to format location
 function formatLocation(locationData) {
   if (!locationData) return 'N/A';
 
@@ -158,7 +155,6 @@ function formatLocation(locationData) {
     return locationData;
   }
 
-  // If location is an object
   if (typeof locationData === 'object') {
     const name =
       locationData.name ||

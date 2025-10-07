@@ -1,10 +1,9 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { X, Plus, Search, Trash2, ArrowLeft, ChevronDown } from 'lucide-react';
-import { getCookie } from '@/lib/utils/cookies';
+import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 
 interface Doctor {
@@ -26,7 +25,8 @@ interface Medicine {
 
 interface OrderItem {
   drugId: number;
-  drugName: string;
+  drugName?: string;
+  name?: string;
   quantity: number;
 }
 
@@ -39,24 +39,33 @@ interface Address {
   country: string;
 }
 
-export default function NewOrderPage() {
+export default function UpdateOrderPage() {
+  const router = useRouter();
+  const params = useParams();
+  const [orderId, setOrderId] = useState<number | null>(null);
   const { authenticatedFetch } = useAuth(['DOCTOR', 'NURSE']);
-  React.useEffect(() => {
-    const username = getCookie('username') || '';
-    const decodedUserName = decodeURIComponent(username);
+  useEffect(() => {
+    const pathParts = window.location.pathname.split('/');
+    const idFromPath = pathParts[pathParts.length - 1];
+    const params = new URLSearchParams(window.location.search);
+    const idFromQuery = params.get('orderId') || params.get('id');
 
-    setFormData((prev) => ({
-      ...prev,
-      orderBy: decodedUserName,
-    }));
+    const id =
+      idFromPath && !isNaN(parseInt(idFromPath)) ? idFromPath : idFromQuery;
+    console.log('Determined orderId:', id);
+    if (id) {
+      setOrderId(parseInt(id));
+    }
   }, []);
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+
   // Custom Select Component
   type CustomSelectOption = {
     value: string;
     label: string;
     description?: string;
   };
-  const [loading, setLoading] = useState(false);
 
   interface CustomSelectProps {
     value: string;
@@ -125,8 +134,10 @@ export default function NewOrderPage() {
       </div>
     );
   };
+
   // Form state
   const [formData, setFormData] = useState({
+    orderId: params.orderId || 0,
     pharmacyId: 2,
     pharmacyName: 'CNS Store (Branch 1)',
     doctorId: '',
@@ -164,27 +175,102 @@ export default function NewOrderPage() {
   // Dropdown data
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
-
   const [medicines, setMedicines] = useState<Medicine[]>([]);
   const [loadingMedicines, setLoadingMedicines] = useState(false);
-  // API medicine type for mapping
+
+  const [sameAsAddress, setSameAsAddress] = useState(false);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
+  const [loadingPatients, setLoadingPatients] = useState(false);
+
+  // Fetch order data
+  useEffect(() => {
+    const fetchOrderData = async () => {
+      if (!orderId) return;
+
+      try {
+        const response = await authenticatedFetch(`/api/orders/${orderId}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch order');
+        }
+
+        const result = await response.json();
+        if (result.success && result.data) {
+          const order = result.data;
+
+          // Populate form data
+          setFormData({
+            orderId: order.id?.toString() || '',
+            pharmacyId: order.pharmacyId || 2,
+            pharmacyName: order.pharmacyName || 'CNS Store (Branch 1)',
+            doctorId: order.doctorId?.toString() || '',
+            doctorName: order.doctorName || '',
+            patientId: order.patientId?.toString() || '',
+            patientName: order.patientName || '',
+            orderBy: order.orderBy || '',
+            orderDate: order.orderDate
+              ? new Date(order.orderDate).toISOString().split('T')[0]
+              : new Date().toISOString().split('T')[0],
+            hospiceAdmitted: order.hospiceAdmitted || '',
+            remarks: order.remarks || '',
+            landmark: order.Landmark || order.landmark || '',
+          });
+
+          // Populate addresses
+          if (order.address) {
+            setAddress(order.address);
+          }
+          if (order.deliveryAddress) {
+            setDeliveryAddress(order.deliveryAddress);
+          }
+
+          // Populate order items
+          if (order.orderItems && Array.isArray(order.orderItems)) {
+            setOrderItems(
+              order.orderItems.map((item: OrderItem) => ({
+                drugId: item.drugId,
+                drugName: item.drugName || item.name || 'Unknown Medicine',
+                quantity: item.quantity || 1,
+              }))
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch order:', error);
+        alert('Failed to load order data. Please try again.');
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    fetchOrderData();
+  }, [orderId, authenticatedFetch]);
+
+  // API types
   type ApiMedicine = {
     id: number;
     DrugName: string;
     Manufacturer?: string;
   };
 
-  // Fetch medicines from API
+  type ApiDoctor = {
+    id: number;
+    name: string;
+    licenseNo?: string;
+  };
+
+  type ApiPatient = {
+    id: number;
+    name: string;
+  };
+
+  // Fetch medicines
   const fetchMedicines = React.useCallback(async () => {
     setLoadingMedicines(true);
     try {
-      const response = await authenticatedFetch('/api/data/medicines');
-      if (!response.ok) {
-        throw new Error('Failed to fetch medicines');
-      }
+      const response = await fetch('/api/data/medicines');
+      if (!response.ok) throw new Error('Failed to fetch medicines');
       const result = await response.json();
       if (result.success && result.data) {
-        // Map API response to our Medicine interface using DrugName
         const medicinesData = result.data.map((medicine: ApiMedicine) => ({
           id: medicine.id,
           name: medicine.DrugName,
@@ -200,30 +286,16 @@ export default function NewOrderPage() {
     } finally {
       setLoadingMedicines(false);
     }
-  }, [authenticatedFetch]);
+  }, []);
 
-  const [sameAsAddress, setSameAsAddress] = useState(false);
-  const [loadingDoctors, setLoadingDoctors] = useState(false);
-  const [loadingPatients, setLoadingPatients] = useState(false);
-
-  // API doctor type for mapping
-  type ApiDoctor = {
-    id: number;
-    name: string;
-    licenseNo?: string;
-  };
-
-  // Fetch doctors from API
+  // Fetch doctors
   const fetchDoctors = React.useCallback(async () => {
     setLoadingDoctors(true);
     try {
       const response = await authenticatedFetch('/api/data/doctors');
-      if (!response.ok) {
-        throw new Error('Failed to fetch doctors');
-      }
+      if (!response.ok) throw new Error('Failed to fetch doctors');
       const result = await response.json();
       if (result.success && result.data) {
-        // Map API response to our Doctor interface
         const doctorsData = result.data.map((doctor: ApiDoctor) => ({
           id: doctor.id,
           name: doctor.name,
@@ -234,34 +306,19 @@ export default function NewOrderPage() {
     } catch (error) {
       console.error('Failed to fetch doctors:', error);
       alert('Failed to load doctors. Please try again.');
-      // Fallback to sample data
-      setDoctors([
-        { id: 2, name: 'Ed Test' },
-        { id: 4, name: 'Doctor 1 CNS' },
-        { id: 7, name: '3 doctor' },
-      ]);
     } finally {
       setLoadingDoctors(false);
     }
   }, [authenticatedFetch]);
 
-  // API patient type for mapping
-  type ApiPatient = {
-    id: number;
-    name: string;
-  };
-
-  // Fetch patients from API
+  // Fetch patients
   const fetchPatients = React.useCallback(async () => {
     setLoadingPatients(true);
     try {
-      const response = await authenticatedFetch('/api/data/patients');
-      if (!response.ok) {
-        throw new Error('Failed to fetch patients');
-      }
+      const response = await fetch('/api/data/patients');
+      if (!response.ok) throw new Error('Failed to fetch patients');
       const result = await response.json();
       if (result.success && result.data) {
-        // Map API response to our Patient interface
         const patientsData = result.data.map((patient: ApiPatient) => ({
           id: patient.id,
           name: patient.name,
@@ -271,24 +328,19 @@ export default function NewOrderPage() {
     } catch (error) {
       console.error('Failed to fetch patients:', error);
       alert('Failed to load patients. Please try again.');
-      // Fallback to sample data
-      setPatients([
-        { id: 6, name: 'PatientFirstName PatientLastName' },
-        { id: 26, name: 'Patient Test' },
-      ]);
     } finally {
       setLoadingPatients(false);
     }
-  }, [authenticatedFetch]);
+  }, []);
 
-  // Load doctors, patients, and medicines on component mount
+  // Load data on mount
   useEffect(() => {
     fetchDoctors();
     fetchPatients();
     fetchMedicines();
-  }, [fetchDoctors, fetchPatients, fetchMedicines]);
+  }, [fetchDoctors, fetchPatients, fetchMedicines, orderId]);
 
-  // Handle same as address checkbox
+  // Handle same as address
   const handleSameAsAddress = (checked: boolean) => {
     setSameAsAddress(checked);
     if (checked) {
@@ -296,14 +348,13 @@ export default function NewOrderPage() {
     }
   };
 
-  // Update delivery address when main address changes (if same as address is checked)
   useEffect(() => {
     if (sameAsAddress) {
       setDeliveryAddress({ ...address });
     }
   }, [address, sameAsAddress]);
 
-  // Handle doctor selection
+  // Handle selections
   const handleDoctorSelect = (value: string) => {
     const doctor = doctors.find((d) => d.id.toString() === value);
     setFormData((prev) => ({
@@ -313,7 +364,6 @@ export default function NewOrderPage() {
     }));
   };
 
-  // Handle patient selection
   const handlePatientSelect = (value: string) => {
     const patient = patients.find((p) => p.id.toString() === value);
     setFormData((prev) => ({
@@ -323,7 +373,7 @@ export default function NewOrderPage() {
     }));
   };
 
-  // Medicine popup component
+  // Medicine Popup
   const MedicinePopup = () => {
     const [selectedMedicine, setSelectedMedicine] = useState('');
     const [quantity, setQuantity] = useState(1);
@@ -343,18 +393,15 @@ export default function NewOrderPage() {
       );
       if (!medicine) return;
 
-      // Check if medicine already exists
       const existingIndex = orderItems.findIndex(
         (item) => item.drugId === medicine.id
       );
 
       if (existingIndex >= 0) {
-        // Update quantity if exists
         const updatedItems = [...orderItems];
         updatedItems[existingIndex].quantity += quantity;
         setOrderItems(updatedItems);
       } else {
-        // Add new medicine
         setOrderItems((prev) => [
           ...prev,
           {
@@ -365,7 +412,6 @@ export default function NewOrderPage() {
         ]);
       }
 
-      // Reset and close
       setSelectedMedicine('');
       setQuantity(1);
       setSearchTerm('');
@@ -386,7 +432,6 @@ export default function NewOrderPage() {
             </Button>
           </div>
 
-          {/* Search */}
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <Input
@@ -397,7 +442,6 @@ export default function NewOrderPage() {
             />
           </div>
 
-          {/* Medicine Selection */}
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2">
               Select Medicine
@@ -420,7 +464,6 @@ export default function NewOrderPage() {
             )}
           </div>
 
-          {/* Quantity */}
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2">Quantity</label>
             <Input
@@ -431,7 +474,6 @@ export default function NewOrderPage() {
             />
           </div>
 
-          {/* Actions */}
           <div className="flex gap-2">
             <Button
               onClick={addMedicine}
@@ -458,12 +500,11 @@ export default function NewOrderPage() {
     );
   };
 
-  // Remove medicine from order
   const removeMedicine = (drugId: number) => {
     setOrderItems((prev) => prev.filter((item) => item.drugId !== drugId));
   };
 
-  // Submit order
+  // Submit update
   const handleSubmit = async () => {
     if (!formData.doctorId || !formData.patientId || orderItems.length === 0) {
       alert(
@@ -476,28 +517,41 @@ export default function NewOrderPage() {
 
     try {
       const orderData = {
-        pharmacyId: formData.pharmacyId,
-        pharmacyName: formData.pharmacyName,
-        doctorId: parseInt(formData.doctorId),
-        doctorName: formData.doctorName,
-        patientId: parseInt(formData.patientId),
-        patientName: formData.patientName,
-        address: address,
-        deliveryAddress: deliveryAddress,
-        Landmark: formData.landmark,
-        orderBy: formData.orderBy,
-        orderDate: new Date(formData.orderDate).toISOString(),
-        hospiceAdmitted: formData.hospiceAdmitted,
-        remarks: formData.remarks,
+        orderId: orderId,
+        pharmacyId: formData.pharmacyId || null,
+        doctorId: formData.doctorId ? parseInt(formData.doctorId) : null,
+        doctorName: formData.doctorName || null,
+        patientId: formData.patientId ? parseInt(formData.patientId) : null,
+        patientName: formData.patientName || null,
+        address: {
+          addressLine1: address.addressLine1 || null,
+          addressLine2: address.addressLine2 || null,
+          city: address.city || null,
+          state: address.state || null,
+          zipCode: address.zipCode || null,
+          country: address.country || null,
+        },
+        deliveryAddress: {
+          addressLine1: deliveryAddress.addressLine1 || null,
+          addressLine2: deliveryAddress.addressLine2 || null,
+          city: deliveryAddress.city || null,
+          state: deliveryAddress.state || null,
+          zipCode: deliveryAddress.zipCode || null,
+          country: deliveryAddress.country || null,
+        },
+        Landmark: formData.landmark || null,
+        orderDate: formData.orderDate
+          ? new Date(formData.orderDate).toISOString()
+          : null,
+        hospiceAdmitted: formData.hospiceAdmitted || null,
+        remarks: formData.remarks || null,
         orderItems: orderItems.map((item) => ({
           drugId: item.drugId,
           quantity: item.quantity,
         })),
       };
 
-      console.log('Submitting order data:', orderData);
-
-      const response = await fetch('/api/orders/create', {
+      const response = await fetch(`/api/orders/update/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -506,114 +560,55 @@ export default function NewOrderPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create order');
+        throw new Error(errorData.message || 'Failed to update order');
       }
 
       const result = await response.json();
-      console.log('Order created successfully:', result);
-      alert('Order created successfully!');
-
-      // Reset form
-      setFormData({
-        pharmacyId: 2,
-        pharmacyName: 'CNS Store (Branch 1)',
-        doctorId: '',
-        doctorName: '',
-        patientId: '',
-        patientName: '',
-        orderBy: '',
-        orderDate: new Date().toISOString().split('T')[0],
-        hospiceAdmitted: '',
-        remarks: '',
-        landmark: '',
-      });
-      setAddress({
-        addressLine1: '',
-        addressLine2: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: 'US',
-      });
-      setDeliveryAddress({
-        addressLine1: '',
-        addressLine2: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: 'US',
-      });
-      setOrderItems([]);
-      setSameAsAddress(false);
-      window.history.back();
+      console.log('Order updated successfully:', result);
+      alert('Order updated successfully!');
+      router.back();
     } catch (error) {
-      console.error('Failed to create order:', error);
+      console.error('Failed to update order:', error);
       let message = 'Unknown error';
       if (error instanceof Error) message = error.message;
-      alert('Failed to create order: ' + message);
+      alert('Failed to update order: ' + message);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Image
-              src="/images/cns-logo-1.png"
-              alt="cns-logo-1"
-              width={60}
-              height={40}
-              className="object-contain"
-            />
-            <span className="text-xl font-medium" style={{ color: '#004c7f' }}>
-              Click
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Image
-                src="/images/admin-icon.jpg"
-                alt="admin-icon"
-                width={24}
-                height={24}
-                className="rounded-full"
-              />
-              <span style={{ color: '#929292' }}>Admin / Super</span>
-              <Image
-                src="/images/icons.png"
-                alt="icons"
-                width={48}
-                height={24}
-                className="object-contain"
-              />
-            </div>
+  if (initialLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-xl font-semibold text-gray-700">
+            Loading order...
           </div>
         </div>
-      </header>
+      </div>
+    );
+  }
 
-      {/* Main Content */}
+  return (
+    <div className="min-h-screen bg-gray-50">
       <div className="p-8 max-w-6xl mx-auto">
-        {/* Page Header */}
         <div className="flex items-center gap-4 mb-8">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => window.history.back()}
+            onClick={() => router.back()}
             style={{ backgroundColor: '#DED1F0', color: '#3a2c4a' }}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>
-          <h1 className="text-3xl font-bold text-gray-900">Create New Order</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Update Order #{orderId}
+          </h1>
         </div>
 
         <div className="bg-white rounded-lg shadow-sm border p-8">
           <div className="space-y-8">
-            {/* Doctor and Patient Selection */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-700">
@@ -661,7 +656,6 @@ export default function NewOrderPage() {
               </div>
             </div>
 
-            {/* Order Details */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-700">
@@ -710,7 +704,6 @@ export default function NewOrderPage() {
               </div>
             </div>
 
-            {/* Patient Address */}
             <div className="border rounded-lg p-6 bg-gray-50">
               <h3 className="text-lg font-semibold mb-4 text-gray-900">
                 Patient Address
@@ -773,7 +766,6 @@ export default function NewOrderPage() {
               </div>
             </div>
 
-            {/* Delivery Address */}
             <div className="border rounded-lg p-6 bg-gray-50">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -867,7 +859,6 @@ export default function NewOrderPage() {
               </div>
             </div>
 
-            {/* Additional Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-700">
@@ -903,7 +894,6 @@ export default function NewOrderPage() {
               </div>
             </div>
 
-            {/* Order Items */}
             <div className="border rounded-lg p-6 bg-gray-50">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">
@@ -963,7 +953,6 @@ export default function NewOrderPage() {
               )}
             </div>
 
-            {/* Action Buttons */}
             <div className="flex gap-4 pt-6">
               <Button
                 onClick={handleSubmit}
@@ -975,11 +964,11 @@ export default function NewOrderPage() {
                   height: '3rem',
                 }}
               >
-                {loading ? 'Creating Order...' : 'Create Order'}
+                {loading ? 'Updating Order...' : 'Update Order'}
               </Button>
               <Button
                 variant="outline"
-                onClick={() => window.history.back()}
+                onClick={() => router.back()}
                 style={{
                   backgroundColor: '#DED1F0',
                   color: '#3a2c4a',
@@ -995,7 +984,6 @@ export default function NewOrderPage() {
         </div>
       </div>
 
-      {/* Medicine Popup */}
       {showMedicinePopup && <MedicinePopup />}
     </div>
   );

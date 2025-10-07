@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import { Input } from '@/components/ui/input';
+import { SidebarMenu, SidebarMenuItem } from '@/components/ui/SidebarMenu';
+import { useAuth } from '@/hooks/useAuth';
+import Link from 'next/link';
 import {
   Home,
   ShoppingCart,
@@ -11,9 +14,6 @@ import {
   HelpCircle,
   Settings,
   LogOut,
-  Plus,
-  Menu,
-  ChevronLeft,
 } from 'lucide-react';
 import Image from 'next/image';
 import { MoreHorizontal, Search } from 'lucide-react';
@@ -32,10 +32,12 @@ import {
 import { StatusCell } from '@/components/ui/status-cell';
 
 export default function Dashboard() {
+  const router = useRouter();
+  const { user, logout, authenticatedFetch } = useAuth(['DOCTOR']);
   const [activeTab, setActiveTab] = useState('orders');
   const [ordersFilter, setOrdersFilter] = useState<number>(-1);
-  const [currentFilter, setCurrentFilter] = useState<number>(-1); // ✅ Add separate state for immediate UI updates
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // ✅ Add sidebar collapse state
+  const [currentFilter, setCurrentFilter] = useState<number>(-1);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [orderRows, setOrderRows] = useState<GridRowsProp>([]);
   const [searchText, setSearchText] = useState('');
   const [approveDialogOpen, setApproveDialogOpen] = useState(false);
@@ -43,6 +45,17 @@ export default function Dashboard() {
   const [approveOrderId, setApproveOrderId] = useState<string | number | null>(
     null
   );
+
+  const [loading, setLoading] = useState(false);
+
+  const today = new Date().toISOString().split('T')[0];
+  const [filters, setFilters] = useState({
+    orderStatus: null as number | null,
+    dateFrom: '2025-01-01',
+    dateTo: today,
+    patientName: null as string | null,
+    orderBy: null as string | null,
+  });
 
   function handleApproveClick(orderId: number | string) {
     setApproveOrderId(orderId);
@@ -52,120 +65,95 @@ export default function Dashboard() {
   async function handleApproveSubmit() {
     if (!approveOrderId) return;
     try {
-      const token = localStorage.getItem('jwtToken');
-      const response = await fetch(
-        'https://cnsclick-api.azurewebsites.net/api/order/approval',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            orderId: approveOrderId,
-            remarks: approveRemarks,
-          }),
-        }
-      );
+      const response = await fetch('/api/orders/approval', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          orderId: approveOrderId,
+          remarks: approveRemarks,
+        }),
+      });
+
       if (!response.ok) {
         const errorData = await response.json();
         alert(errorData.message || 'Failed to approve order');
         return;
       }
+
       setApproveDialogOpen(false);
       setApproveRemarks('');
       setApproveOrderId(null);
-      fetchOrders(); // Optionally refresh orders
+      fetchOrders();
       alert('Order approved successfully');
     } catch (error) {
-      alert('Failed to approve order. '+error);
+      alert('Failed to approve order. ' + error);
     }
   }
-  const today = new Date().toISOString().split('T')[0];
 
-  const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({
-    orderStatus: null as number | null, // ✅ Initialize with null for "All Orders"
-    dateFrom: '2025-01-01',
-    dateTo: today,
-    patientName: null as string | null,
-    orderBy: null as string | null,
-  });
-
-  // ✅ Fixed fetchOrders - useCallback to stabilize reference for useEffect
   const fetchOrders = useCallback(
     async (searchQuery = '', statusFilter: number | null = null) => {
       setLoading(true);
       try {
-        const token = localStorage.getItem('jwtToken');
-        if (!token) throw new Error('No authentication token found');
-
         const updatedFilters = {
           ...filters,
           patientName: searchQuery.trim() || null,
-          orderStatus: statusFilter, // ✅ Use the parameter directly
+          orderStatus: statusFilter,
         };
 
-        console.log('Sending filters to API:', updatedFilters); // ✅ Add logging
+        console.log('Sending filters to API:', updatedFilters);
 
-        const response = await fetch('/api/orders', {
+        const response = await authenticatedFetch('/api/orders', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(updatedFilters),
         });
 
         if (!response.ok) {
+          if (response.status === 401) {
+            router.push('/login');
+            return;
+          }
           const errorData = await response.json();
           throw new Error(errorData.message || 'Failed to fetch orders');
+        } else if (response.status === 401) {
+          router.push('/login');
+          console.log('Redirecting to login due to 401 response');
+          return;
         }
 
         const ordersData = await response.json();
         setOrderRows(ordersData);
       } catch (error) {
         console.error('Failed to fetch orders:', error);
-        alert('Failed to fetch orders: ');
+        alert('Failed to fetch orders');
       } finally {
         setLoading(false);
       }
     },
-    [filters]
+    [filters, router, authenticatedFetch]
   );
 
   useEffect(() => {
-    fetchOrders();
-  }, [ordersFilter, fetchOrders]);
+    if (user) {
+      fetchOrders();
+    }
+  }, [ordersFilter, user, fetchOrders]);
 
-  // ✅ Fixed handleStatusFilter using separate state for UI
   const handleStatusFilter = (status: number) => {
     console.log('Clicking status:', status);
-
-    // Immediately update the UI state
     setCurrentFilter(status);
-
-    // Convert -1 to null for API call
     const filterValue = status === -1 ? null : status;
     console.log('Sending to API:', filterValue);
-
-    // Update the main state
     setOrdersFilter(status);
     setFilters((prev) => ({
       ...prev,
       orderStatus: filterValue,
     }));
-
-    // Fetch orders after state is updated
     fetchOrders(searchText, filterValue);
   };
 
-  // ✅ Add useEffect to handle re-render after state update
-  useEffect(() => {
-    // This will trigger a re-render whenever ordersFilter changes
-  }, [ordersFilter]);
-
-  // ✅ Fixed handleSearch
   const handleSearch = () => {
     const filterValue = currentFilter === -1 ? null : currentFilter;
     fetchOrders(searchText, filterValue);
@@ -179,23 +167,21 @@ export default function Dashboard() {
     setSearchText(e.target.value);
   };
 
-  // ✅ Fixed clearSearch
   const clearSearch = () => {
     setSearchText('');
     const filterValue = currentFilter === -1 ? null : currentFilter;
     fetchOrders('', filterValue);
   };
 
-  const menuItems = [
+  const menuItems: SidebarMenuItem[] = [
     { id: 'home', label: 'Home', icon: Home },
     { id: 'orders', label: 'Orders', icon: ShoppingCart },
     { id: 'chat', label: 'Chat', icon: MessageCircle },
     { id: 'help', label: 'Help', icon: HelpCircle },
     { id: 'settings', label: 'Settings', icon: Settings },
-    { id: 'logout', label: 'Log out', icon: LogOut },
+    { id: 'logout', label: 'Log out', icon: LogOut, onClick: logout },
   ];
 
-  // Custom renderers...
   const OrderDateCell = ({ value }: { value: string }) => {
     const [date, time] = value.split('\n');
     return (
@@ -228,7 +214,16 @@ export default function Dashboard() {
         <DropdownMenuContent align="end">
           <DropdownMenuItem>Resend Confirmation</DropdownMenuItem>
           <DropdownMenuItem>Cancel</DropdownMenuItem>
-          <DropdownMenuItem>Modify</DropdownMenuItem>
+          {typeof params.row.status === 'string' &&
+            params.row.status.replace(/_/g, ' ').toUpperCase() ===
+              'WAITING FOR APPROVAL' && (
+              <DropdownMenuItem
+                
+              >
+                <Link href={`/orders/update/${params.row.orderid}`}>Modify</Link>
+                
+              </DropdownMenuItem>
+            )}
           {typeof params.row.status === 'string' &&
             params.row.status.replace(/_/g, ' ').toUpperCase() ===
               'WAITING FOR APPROVAL' &&
@@ -244,7 +239,7 @@ export default function Dashboard() {
       </DropdownMenu>
     </div>
   );
-  // Columns
+
   const orderColumns: GridColDef[] = [
     { field: 'orderid', headerName: 'Order ID', width: 120, sortable: true },
     {
@@ -303,10 +298,8 @@ export default function Dashboard() {
     },
   ];
 
-  // Main content
   const renderContent = () => {
     if (activeTab === 'orders') {
-      // ✅ Fixed filterButtons - use -1 for "All Orders"
       const filterButtons = [
         { id: -1, label: 'All Orders' },
         { id: 1, label: 'CREATED' },
@@ -320,7 +313,6 @@ export default function Dashboard() {
           <div className="mb-6">
             <p className="text-gray-600 mb-4">Track, Create Orders here...</p>
 
-            {/* ✅ Status filter buttons using currentFilter for immediate UI updates */}
             <div className="flex gap-6 mb-6">
               {filterButtons.map((button) => (
                 <button
@@ -337,7 +329,6 @@ export default function Dashboard() {
               ))}
             </div>
 
-            {/* Search */}
             <div className="relative mb-6">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
@@ -347,7 +338,6 @@ export default function Dashboard() {
                 onKeyPress={handleKeyPress}
                 className="pl-10 max-w-md bg-white border-gray-300"
               />
-              {/* Approve Modal Dialog */}
               {approveDialogOpen && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
                   <div className="bg-white rounded-lg shadow-lg p-6 w-96">
@@ -397,7 +387,6 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Table */}
           <div
             className="bg-white rounded-lg border"
             style={{ height: 500, width: '100%' }}
@@ -452,10 +441,16 @@ export default function Dashboard() {
     );
   };
 
-  // Layout
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -479,7 +474,7 @@ export default function Dashboard() {
                 height={24}
                 className="rounded-full"
               />
-              <span style={{ color: '#929292' }}>Admin / Super</span>
+              <span style={{ color: '#929292' }}>Dr. {user.username}</span>
               <Image
                 src="/images/icons.png"
                 alt="icons"
@@ -493,66 +488,14 @@ export default function Dashboard() {
       </header>
 
       <div className="flex">
-        {/* Sidebar */}
-        <aside
-          className={`min-h-screen transition-all duration-300 ${
-            sidebarCollapsed ? 'w-16' : 'w-64'
-          }`}
-          style={{ backgroundColor: '#5e5e5e' }}
-        >
-          {/* Toggle Button at the top */}
-          <div className="flex justify-between items-center p-4 border-b border-gray-600">
-            {!sidebarCollapsed && (
-              <span className="text-white font-medium">Menu</span>
-            )}
-            <button
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className="text-white hover:bg-gray-600 p-2 rounded transition-colors"
-              title={sidebarCollapsed ? 'Expand Menu' : 'Collapse Menu'}
-            >
-              {sidebarCollapsed ? (
-                <Menu className="w-5 h-5" />
-              ) : (
-                <ChevronLeft className="w-5 h-5" />
-              )}
-            </button>
-          </div>
+        <SidebarMenu
+          items={menuItems}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          collapsed={sidebarCollapsed}
+          setCollapsed={setSidebarCollapsed}
+        />
 
-          <div className="p-4">
-            {/* New Link */}
-            <Link
-              href="/orders/create"
-              className={`w-full mb-6 flex items-center justify-center bg-transparent border border-gray-400 text-white hover:bg-gray-600 transition-colors ${
-                sidebarCollapsed ? 'px-2' : 'px-4 py-2'
-              } rounded-md`}
-            >
-              <Plus className="w-4 h-4" />
-              {!sidebarCollapsed && <span className="ml-2">New</span>}
-            </Link>
-
-            {/* Navigation Menu */}
-            <nav className="space-y-1">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-gray-600 transition-colors ${
-                      activeTab === item.id ? 'bg-gray-600' : ''
-                    } ${sidebarCollapsed ? 'justify-center px-2' : ''}`}
-                    title={sidebarCollapsed ? item.label : undefined}
-                  >
-                    <Icon className="w-5 h-5 flex-shrink-0" />
-                    {!sidebarCollapsed && <span>{item.label}</span>}
-                  </button>
-                );
-              })}
-            </nav>
-          </div>
-        </aside>
-
-        {/* Main */}
         <main className="flex-1 bg-white">{renderContent()}</main>
       </div>
     </div>

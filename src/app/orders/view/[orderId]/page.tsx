@@ -1,4 +1,3 @@
-// Dynamic order view page using orderId from URL
 'use client';
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -6,6 +5,7 @@ import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 interface OrderItem {
   drugId: number;
@@ -19,6 +19,7 @@ interface OrderItem {
 }
 
 export default function NewOrderPage() {
+  const {} = useAuth(['DOCTOR', 'NURSE', 'ADMIN', 'PHARMACIST', 'HOSPICE']);
   const [address, setAddress] = React.useState({
     addressLine1: '',
     addressLine2: '',
@@ -60,18 +61,11 @@ export default function NewOrderPage() {
   // Fetch order details from API
   const fetchOrderDetails = React.useCallback(async () => {
     try {
-      const token = localStorage.getItem('jwtToken');
-      if (!token) throw new Error('No authentication token found');
-      const response = await fetch(
-        `https://cnsclick-api.azurewebsites.net/api/order/get/${orderId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const response = await fetch('/api/orders/view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch order details');
       }
@@ -105,9 +99,6 @@ export default function NewOrderPage() {
     if (orderId) fetchOrderDetails();
   }, [orderId, fetchOrderDetails]);
 
-  // ...existing fetchDoctors, fetchPatients, fetchMedicines, CustomSelect, MedicinePopup, etc...
-
-  // Restore UI rendering code
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
